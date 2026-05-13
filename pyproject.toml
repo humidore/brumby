@@ -1,0 +1,21 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "brumby"
+version = "0.1.0"
+requires-python = ">=3.11"
+dependencies = [
+    "requests",
+    "seekablehttpfile",
+]
+
+[project.scripts]
+brumby = "brumby.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["brumby"]
+
+[dependency-groups]
+dev = ["pytest>=7"]

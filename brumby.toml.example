@@ -1,0 +1,50 @@
+# brumby.toml — place alongside pyproject.toml or at ~/.config/brumby/brumby.toml
+#
+# Each finder can be toggled with a bare boolean:
+#   finder_name = false
+#
+# Or configured in detail:
+#   [finders.finder_name]
+#   enabled = true
+#   threshold = 42        # finder-specific option
+
+[finders]
+# high_entropy_source is on by default; set to false to disable it
+# high_entropy_source = false
+
+# [finders.giant_version]
+# threshold = 5           # flag versions with major > 5 (default)
+
+# [finders.development_checkout]
+# threshold_hours = 0.05  # flag archives whose file timestamps span > 3m
+# ignore_round_dates = true # ignore timestamps like YYYY-01-01 / YYYY-02-02 00:00:00 before measuring
+
+# [finders.archive_umask]
+# enabled = true          # infer bits never set across Unix permission bits in a wheel (e.g. 022)
+
+# [finders.back_to_back_releases]
+# threshold_hours = 1.0   # flag when new release follows stable by < 1h
+
+# [finders.wheel_uploaded_before_sdist]
+# grace_minutes = 2       # allow this many minutes of slack for batch CI uploads
+
+# [finders.wheel_uploaded_late_after_sdist]
+# threshold_hours = 1.0   # flag wheels added more than 1h after the sdist
+
+# [finders.long_source_line]
+# threshold = 500         # flag lines longer than 500 characters
+
+# [finders.high_entropy_source]
+# enabled = true
+# threshold = 5.5         # Shannon entropy bits/byte (6.0 ≈ base64, 8.0 ≈ random)
+# max_line_length = 8192  # ignore giant lines; long_source_line handles them
+
+# [finders.packager_timezone]
+# tolerance_minutes = 2   # accept +/- 2m around whole-hour offsets
+
+# [finders.protonmail_account]
+# domains = ["protonmail.com", "pm.me"]  # additional suspicious domains
+
+# [thresholds]
+# sus = 1             # min sketchy findings for "assess" to report high risk (default: 1)
+# informational = 0   # min informational findings for "assess" to report high risk (default: 0)
