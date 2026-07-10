@@ -2,8 +2,22 @@ import datetime
 from typing import Any
 
 import requests
+from packaging.version import InvalidVersion, Version
 
 _PYPI_BASE = "https://pypi.org/pypi"
+
+
+def validate_version(version: str) -> str:
+    """Return version unchanged if it is a valid PEP 440 version.
+
+    Raises ValueError with a readable message otherwise, so callers can surface
+    it to the user.
+    """
+    try:
+        Version(version)
+    except InvalidVersion:
+        raise ValueError(f"invalid version: {version!r}") from None
+    return version
 
 
 def get_package_info(package: str) -> dict[str, Any]:

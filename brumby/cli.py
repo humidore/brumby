@@ -21,7 +21,7 @@ from .analyze import (
 )
 from .artifact import ArtifactView, make_local_artifact
 from .config import get_settings, get_thresholds, is_enabled, load_config
-from .pypi import get_latest_version, get_package_info, release_upload_bounds
+from .pypi import get_latest_version, get_package_info, release_upload_bounds, validate_version
 from .registry import get_finders
 
 
@@ -49,6 +49,13 @@ def _fmt_release_version(version: str, bounds: tuple[datetime.datetime | None, d
 
 def _is_404_http_error(exc: BaseException) -> bool:
     return isinstance(exc, requests.HTTPError) and getattr(exc.response, "status_code", None) == 404
+
+
+def _validate_supplied_versions(*versions: str) -> None:
+    """Validate any user-supplied version strings, skipping empty (auto-detect) ones."""
+    for version in versions:
+        if version:
+            validate_version(version)
 
 
 def _inspect_lines(findings, summary: bool = False) -> list[str]:
@@ -236,6 +243,7 @@ def cmd_export(args: argparse.Namespace) -> int:
             new_artifact = make_local_artifact(new_path)
             old_label, new_label = str(old_path), str(new_path)
         else:
+            _validate_supplied_versions(args.stable, args.new)
             pkg_info = get_package_info(args.package)
             stable, new = resolve_versions(
                 args.package,
@@ -317,6 +325,7 @@ def cmd_check(args: argparse.Namespace) -> int:
                 content=not args.fast,
             )
         else:
+            _validate_supplied_versions(args.stable, args.new)
             pkg_info = get_package_info(args.package)
             package_label = args.package
             stable, new = resolve_versions(
@@ -468,6 +477,7 @@ def cmd_inspect(args: argparse.Namespace) -> int:
             else:
                 findings = analyze_artifacts([artifact], config, content=not args.fast)
         else:
+            _validate_supplied_versions(args.version)
             version = args.version or get_latest_version(args.package)
             pkg_info = get_package_info(args.package)
             label = f"{args.package} {version}"
