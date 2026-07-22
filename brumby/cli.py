@@ -1,5 +1,6 @@
 import argparse
 import datetime
+import json
 import subprocess
 import sys
 import tarfile
@@ -303,6 +304,20 @@ def _assess_line(project: str, risk: str) -> str:
     return f"{project:<24} {color}{risk} risk\033[0m"
 
 
+def _assess_emit(project: str, risk: str, as_json: bool) -> None:
+    if as_json:
+        print(json.dumps({"project": project, "risk": risk}))
+    else:
+        print(_assess_line(project, risk))
+
+
+def _assess_error(project: str, message: str, as_json: bool) -> None:
+    if as_json:
+        print(json.dumps({"project": project, "error": message}), file=sys.stderr)
+    else:
+        print(f"error: {message}", file=sys.stderr)
+
+
 def cmd_check(args: argparse.Namespace) -> int:
     config = load_config(Path(args.config) if args.config else None)
     old_path = Path(args.package)
@@ -413,6 +428,7 @@ def cmd_check(args: argparse.Namespace) -> int:
 def cmd_assess(args: argparse.Namespace) -> int:
     config = load_config(Path(args.config) if args.config else None)
     local_path = Path(args.package)
+    as_json = args.json
     try:
         if local_path.is_file():
             project = local_path.name
@@ -426,14 +442,14 @@ def cmd_assess(args: argparse.Namespace) -> int:
             if mode == "inspect":
                 version = new
                 if not version:
-                    print(f"error: Only one version found for {args.package}", file=sys.stderr)
+                    _assess_error(project, f"Only one version found for {args.package}", as_json)
                     return 1
                 artifacts = get_artifacts(args.package, version, pkg_info=pkg_info, save_dir=args.save_artifacts or None)
                 findings = analyze_release(artifacts, pkg_info, version, config, content=not args.fast)
                 risk = _risk_from_findings(findings, config)
             else:
                 if not stable or not new:
-                    print(f"error: Only one version found for {args.package}", file=sys.stderr)
+                    _assess_error(project, f"Only one version found for {args.package}", as_json)
                     return 1
                 _stable_findings, _new_findings, diffs = check_package(
                     args.package,
@@ -450,18 +466,18 @@ def cmd_assess(args: argparse.Namespace) -> int:
                 )
                 risk = _risk_from_diffs(diffs, config)
     except ScanSkipped:
-        print(_assess_line(project if 'project' in locals() else args.package, "did not scan"))
+        _assess_emit(project if 'project' in locals() else args.package, "did not scan", as_json)
         return 0
     except requests.HTTPError as e:
         if getattr(e.response, "status_code", None) == 404:
-            print(f"error: {args.package} not found (HTTP 404)", file=sys.stderr)
+            _assess_error(args.package, f"{args.package} not found (HTTP 404)", as_json)
             return 1
         raise
     except ValueError as e:
-        print(f"error: {e}", file=sys.stderr)
+        _assess_error(project if 'project' in locals() else args.package, str(e), as_json)
         return 1
 
-    print(_assess_line(project, risk))
+    _assess_emit(project, risk, as_json)
     return 1 if risk == "high" else 0
 
 
@@ -560,6 +576,8 @@ def main() -> None:
     assess.add_argument("package", help="Package name or local artifact path")
     assess.add_argument("--cutoff", type=int, default=24, metavar="HOURS",
                         help="Hours threshold for recent-release classification (default: 24)")
+    assess.add_argument("--json", action="store_true",
+                        help="Emit result as a JSON object instead of a formatted line")
     _add_common(assess)
 
     inspect = sub.add_parser("inspect", help="Show findings for one version or local artifact file")

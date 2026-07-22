@@ -36,7 +36,9 @@ def test_prepare_scan_artifacts_prefers_manylinux_over_musllinux_on_tie() -> Non
 
     selected = prepare_scan_artifacts(artifacts)
 
-    assert [a.filename for a in selected] == ["pkg-1.0-cp312-cp312-manylinux_x86_64.whl"]
+    assert [a.filename for a in selected] == [
+        "pkg-1.0-cp312-cp312-manylinux_x86_64.whl"
+    ]
 
 
 def test_prepare_scan_artifacts_prefers_arm64_over_x86_64_on_tie() -> None:
@@ -82,9 +84,21 @@ def test_prepare_scan_artifacts_skips_when_selected_total_exceeds_limit() -> Non
 
 
 def test_assess_reports_did_not_scan(monkeypatch, capsys) -> None:
-    monkeypatch.setattr(cli, "get_package_info", lambda package: {"info": {"version": "1.0"}, "releases": {}})
-    monkeypatch.setattr(cli, "select_assess_mode", lambda package, cutoff_hours=24, pkg_info=None: ("check", "0.9", "1.0"))
-    monkeypatch.setattr(cli, "check_package", lambda *args, **kwargs: (_ for _ in ()).throw(ScanSkipped("did not scan")))
+    monkeypatch.setattr(
+        cli,
+        "get_package_info",
+        lambda package: {"info": {"version": "1.0"}, "releases": {}},
+    )
+    monkeypatch.setattr(
+        cli,
+        "select_assess_mode",
+        lambda package, cutoff_hours=24, pkg_info=None: ("check", "0.9", "1.0"),
+    )
+    monkeypatch.setattr(
+        cli,
+        "check_package",
+        lambda *args, **kwargs: (_ for _ in ()).throw(ScanSkipped("did not scan")),
+    )
 
     class Args:
         config = ""
@@ -92,6 +106,7 @@ def test_assess_reports_did_not_scan(monkeypatch, capsys) -> None:
         cutoff = 24
         fast = False
         save_artifacts = ""
+        json = False
 
     assert cli.cmd_assess(Args()) == 0
     assert capsys.readouterr().out == cli._assess_line("demo", "did not scan") + "\n"
