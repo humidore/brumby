@@ -1,5 +1,7 @@
 import datetime
 
+import pytest
+
 from brumby.analyze import find_last_with_cutoff, resolve_versions, select_assess_mode
 
 
@@ -55,6 +57,41 @@ def test_resolve_versions_honors_last_mode() -> None:
 
     assert stable == "1.1"
     assert new == "1.3"
+
+
+def test_resolve_versions_anchors_stable_on_new_package_upload_time() -> None:
+    stable, new = resolve_versions("pkg", cutoff_hours=24, new_version="1.2", pkg_info=_pkg_info())
+
+    assert new == "1.2"
+    assert stable == "1.0"
+
+
+def test_resolve_versions_falls_back_to_preceding_release_when_none_meets_cutoff() -> None:
+    stable, new = resolve_versions("pkg", cutoff_hours=48, new_version="1.2", pkg_info=_pkg_info())
+
+    assert new == "1.2"
+    assert stable == "1.1"
+
+
+def test_resolve_versions_returns_no_stable_when_supplied_new_is_oldest() -> None:
+    stable, new = resolve_versions("pkg", cutoff_hours=24, new_version="1.0", pkg_info=_pkg_info())
+
+    assert new == "1.0"
+    assert stable is None
+
+
+def test_resolve_versions_ignores_cutoff_for_last_two_with_supplied_new() -> None:
+    stable, new = resolve_versions(
+        "pkg", cutoff_hours=24, new_version="1.2", last_two=True, pkg_info=_pkg_info()
+    )
+
+    assert new == "1.2"
+    assert stable == "1.1"
+
+
+def test_resolve_versions_rejects_supplied_new_missing_from_releases() -> None:
+    with pytest.raises(ValueError, match="9.9"):
+        resolve_versions("pkg", cutoff_hours=24, new_version="9.9", pkg_info=_pkg_info())
 
 
 def test_select_assess_mode_uses_check_for_recent_release(monkeypatch) -> None:

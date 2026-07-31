@@ -52,6 +52,15 @@ def _is_404_http_error(exc: BaseException) -> bool:
     return isinstance(exc, requests.HTTPError) and getattr(exc.response, "status_code", None) == 404
 
 
+def _add_version_flags(parser: argparse.ArgumentParser) -> None:
+    """Add the shared --stable/--new version overrides."""
+    parser.add_argument("--stable", default="", help="Older version (auto-detected if omitted)")
+    parser.add_argument("--new", default="",
+                        help="Newer version (auto-detected if omitted); without --stable, the "
+                             "baseline is resolved from this version's upload time rather than "
+                             "the current time")
+
+
 def _validate_supplied_versions(*versions: str) -> None:
     """Validate any user-supplied version strings, skipping empty (auto-detect) ones."""
     for version in versions:
@@ -431,14 +440,23 @@ def cmd_assess(args: argparse.Namespace) -> int:
     as_json = args.json
     try:
         if local_path.is_file():
+            if args.stable or args.new:
+                raise ValueError("--stable and --new cannot be used with a local artifact path")
             project = local_path.name
             artifact = make_local_artifact(local_path)
             findings = analyze_artifacts([artifact], config, content=not args.fast)
             risk = _risk_from_findings(findings, config)
         else:
+            _validate_supplied_versions(args.stable, args.new)
             pkg_info = get_package_info(args.package)
             project = args.package
-            mode, stable, new = select_assess_mode(args.package, cutoff_hours=args.cutoff, pkg_info=pkg_info)
+            mode, stable, new = select_assess_mode(
+                args.package,
+                cutoff_hours=args.cutoff,
+                pkg_info=pkg_info,
+                stable_version=args.stable or None,
+                new_version=args.new or None,
+            )
             if mode == "inspect":
                 version = new
                 if not version:
@@ -559,8 +577,7 @@ def main() -> None:
     check.add_argument("package", help="Package name or local artifact path")
     check.add_argument("other", nargs="?", default="",
                        help="Optional second local artifact path for artifact-only compare")
-    check.add_argument("--stable", default="", help="Older version (auto-detected if omitted)")
-    check.add_argument("--new", default="", help="Newer version (auto-detected if omitted)")
+    _add_version_flags(check)
     check.add_argument("--cutoff", type=int, default=24, metavar="HOURS",
                        help="Hours threshold for stable classification (default: 24)")
     mode = check.add_mutually_exclusive_group()
@@ -574,6 +591,7 @@ def main() -> None:
 
     assess = sub.add_parser("assess", help="Classify a package as high or average risk")
     assess.add_argument("package", help="Package name or local artifact path")
+    _add_version_flags(assess)
     assess.add_argument("--cutoff", type=int, default=24, metavar="HOURS",
                         help="Hours threshold for recent-release classification (default: 24)")
     assess.add_argument("--json", action="store_true",
@@ -600,8 +618,7 @@ def main() -> None:
     export.add_argument("package", help="Package name or local artifact path")
     export.add_argument("other", nargs="?", default="",
                         help="Optional second local artifact path for artifact-only compare")
-    export.add_argument("--stable", default="", help="Older version (auto-detected if omitted)")
-    export.add_argument("--new", default="", help="Newer version (auto-detected if omitted)")
+    _add_version_flags(export)
     export.add_argument("--cutoff", type=int, default=24, metavar="HOURS",
                         help="Hours threshold for stable classification (default: 24)")
     export_mode = export.add_mutually_exclusive_group()
