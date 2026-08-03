@@ -457,7 +457,9 @@ def cmd_assess(args: argparse.Namespace) -> int:
                 stable_version=args.stable or None,
                 new_version=args.new or None,
             )
-            if mode == "inspect":
+            if mode == "first-release":
+                risk = "high"
+            elif mode == "inspect":
                 version = new
                 if not version:
                     _assess_error(project, f"Only one version found for {args.package}", as_json)

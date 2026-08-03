@@ -222,13 +222,19 @@ def select_assess_mode(
     """Pick the assess mode and target versions for a package.
 
     Returns (mode, stable_version, new_version).
-    mode is one of: "check", "check-last", "inspect".
+    mode is one of: "check", "check-last", "inspect", "first-release".
 
     Supplying stable_version and/or new_version skips auto-detection and uses those
     versions directly, falling back to "inspect" when they yield no distinct baseline.
     """
     if pkg_info is None:
         pkg_info = get_package_info(package)
+
+    versioned = uploaded_versions(pkg_info)
+    if len(versioned) == 1:
+        # A package's first-ever release has nothing to diff against, so it is
+        # unvetted by definition regardless of what the finders would report.
+        return "first-release", None, versioned[0][1]
 
     if stable_version or new_version:
         stable, new = resolve_versions(

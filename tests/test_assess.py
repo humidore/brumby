@@ -40,7 +40,25 @@ def _args(
 
 
 def _boom(*args, **kwargs):
-    raise AssertionError("auto-detection should not run for supplied versions")
+    raise AssertionError("this code path should not run")
+
+
+def test_assess_reports_high_risk_for_first_release_without_scanning(
+    monkeypatch, capsys
+) -> None:
+    monkeypatch.setattr(
+        cli,
+        "get_package_info",
+        lambda package: {
+            "info": {"version": "1.0"},
+            "releases": {"1.0": [{"upload_time_iso_8601": "2026-05-08T11:00:00+00:00"}]},
+        },
+    )
+    monkeypatch.setattr(cli, "get_artifacts", _boom)
+    monkeypatch.setattr(cli, "check_package", _boom)
+
+    assert cli.cmd_assess(_args()) == 1
+    assert capsys.readouterr().out == cli._assess_line("demo", "high") + "\n"
 
 
 def test_assess_check_mode_is_high_risk_for_any_sketchy_diff_by_default(
