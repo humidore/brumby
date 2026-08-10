@@ -92,7 +92,7 @@ def test_assess_reports_did_not_scan(monkeypatch, capsys) -> None:
     monkeypatch.setattr(
         cli,
         "select_assess_mode",
-        lambda package, cutoff_hours=24, pkg_info=None: ("check", "0.9", "1.0"),
+        lambda package, **kwargs: ("check", "0.9", "1.0"),
     )
     monkeypatch.setattr(
         cli,
@@ -107,6 +107,8 @@ def test_assess_reports_did_not_scan(monkeypatch, capsys) -> None:
         fast = False
         save_artifacts = ""
         json = False
+        stable = ""
+        new = ""
 
     assert cli.cmd_assess(Args()) == 0
     assert capsys.readouterr().out == cli._assess_line("demo", "did not scan") + "\n"

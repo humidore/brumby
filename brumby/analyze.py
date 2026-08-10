@@ -5,7 +5,13 @@ from .artifact import Artifact, ArtifactView, make_artifact
 from .compare import DiffCallback, compare_releases
 from .config import get_settings, is_enabled, load_config
 from .finding import Finding
-from .pypi import find_versions, get_package_info, get_release_files
+from .pypi import (
+    find_stable_before,
+    find_versions,
+    get_package_info,
+    get_release_files,
+    uploaded_versions,
+)
 from .registry import get_finders
 
 _MAX_SCAN_BYTES = 300 * 1024 * 1024
@@ -180,6 +186,18 @@ def resolve_versions(
     if pkg_info is None:
         pkg_info = get_package_info(package)
 
+    if new_version is not None:
+        # An explicitly chosen new version anchors the baseline on its own upload
+        # time, so the stable side can never end up newer than the new side.
+        found_stable = find_stable_before(
+            package,
+            new_version,
+            cutoff_hours,
+            info=pkg_info,
+            use_cutoff=not last_two,
+        )
+        return found_stable, new_version
+
     if last:
         found_stable, found_new = find_last_with_cutoff(package, cutoff_hours, pkg_info)
     elif last_two:
@@ -191,32 +209,44 @@ def resolve_versions(
 
 
 def _release_days(pkg_info: dict) -> set[datetime.date]:
-    days: set[datetime.date] = set()
-    for files in pkg_info.get("releases", {}).values():
-        if not files:
-            continue
-        upload_times = [
-            datetime.datetime.fromisoformat(f["upload_time_iso_8601"])
-            for f in files
-            if f.get("upload_time_iso_8601")
-        ]
-        if upload_times:
-            days.add(max(upload_times).date())
-    return days
+    return {upload_time.date() for upload_time, _version in uploaded_versions(pkg_info)}
 
 
 def select_assess_mode(
     package: str,
     cutoff_hours: int = 24,
     pkg_info: dict | None = None,
+    stable_version: str | None = None,
+    new_version: str | None = None,
 ) -> tuple[str, str | None, str | None]:
     """Pick the assess mode and target versions for a package.
 
     Returns (mode, stable_version, new_version).
-    mode is one of: "check", "check-last", "inspect".
+    mode is one of: "check", "check-last", "inspect", "first-release".
+
+    Supplying stable_version and/or new_version skips auto-detection and uses those
+    versions directly, falling back to "inspect" when they yield no distinct baseline.
     """
     if pkg_info is None:
         pkg_info = get_package_info(package)
+
+    versioned = uploaded_versions(pkg_info)
+    if len(versioned) == 1:
+        # A package's first-ever release has nothing to diff against, so it is
+        # unvetted by definition regardless of what the finders would report.
+        return "first-release", None, versioned[0][1]
+
+    if stable_version or new_version:
+        stable, new = resolve_versions(
+            package,
+            cutoff_hours=cutoff_hours,
+            stable_version=stable_version,
+            new_version=new_version,
+            pkg_info=pkg_info,
+        )
+        if stable and new and stable != new:
+            return "check", stable, new
+        return "inspect", None, new or stable
 
     stable, new = resolve_versions(package, cutoff_hours=cutoff_hours, pkg_info=pkg_info)
     initial_latest = stable
@@ -304,18 +334,9 @@ def find_last_two_versions(
     package: str, pkg_info: dict | None = None
 ) -> tuple[str | None, str | None]:
     """Return the two most recently uploaded versions regardless of age."""
-    import datetime
     if pkg_info is None:
         pkg_info = get_package_info(package)
-    versioned = []
-    for version, files in pkg_info["releases"].items():
-        if not files:
-            continue
-        latest = max(
-            datetime.datetime.fromisoformat(f["upload_time_iso_8601"]) for f in files
-        )
-        versioned.append((latest, version))
-    versioned.sort(reverse=True)
+    versioned = uploaded_versions(pkg_info)
     if len(versioned) < 2:
         return (versioned[0][1] if versioned else None), None
     return versioned[1][1], versioned[0][1]  # (older, newer)
@@ -330,30 +351,18 @@ def find_last_with_cutoff(
     be numerically newer than the latest release if the project's version scheme
     is not chronological.
     """
-    import datetime
-
     if pkg_info is None:
         pkg_info = get_package_info(package)
 
-    versioned: list[tuple[datetime.datetime, str]] = []
-    for version, files in pkg_info["releases"].items():
-        if not files:
-            continue
-        latest = max(
-            datetime.datetime.fromisoformat(f["upload_time_iso_8601"]) for f in files
-        )
-        versioned.append((latest, version))
-
+    versioned = uploaded_versions(pkg_info)
     if not versioned:
         return None, None
 
-    versioned.sort(reverse=True)
     newest_time, newest_version = versioned[0]
     cutoff = newest_time - datetime.timedelta(hours=cutoff_hours)
     older = [item for item in versioned[1:] if item[0] <= cutoff]
     if not older:
         return None, newest_version
-    older.sort(reverse=True)
     return older[0][1], newest_version
 
 

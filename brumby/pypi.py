@@ -83,6 +83,52 @@ def release_upload_bounds(
     return min(times), max(times)
 
 
+def uploaded_versions(info: dict[str, Any]) -> list[tuple[datetime.datetime, str]]:
+    """Return (latest_upload_time, version) for every release with files, newest first."""
+    versioned: list[tuple[datetime.datetime, str]] = []
+    for version in info.get("releases", {}):
+        newest = release_upload_bounds(info, version)[1]
+        if newest is not None:
+            versioned.append((newest, version))
+    versioned.sort(reverse=True)
+    return versioned
+
+
+def find_stable_before(
+    package: str,
+    new_version: str,
+    cutoff_hours: int = 24,
+    info: dict[str, Any] | None = None,
+    use_cutoff: bool = True,
+) -> str | None:
+    """Return the stable baseline to compare an explicitly chosen new_version against.
+
+    The cutoff is anchored on new_version's own upload time rather than the current
+    time, so the baseline always predates new_version. Prefers the newest release
+    uploaded at least cutoff_hours before it, falling back to the release immediately
+    preceding it. Returns None when nothing predates new_version.
+    """
+    if info is None:
+        info = get_package_info(package)
+
+    if new_version not in info.get("releases", {}):
+        raise ValueError(f"version {new_version} not found for {package}")
+    versioned = uploaded_versions(info)
+    anchor = next((time for time, version in versioned if version == new_version), None)
+    if anchor is None:
+        raise ValueError(f"version {new_version} has no files for {package}")
+
+    older = [item for item in versioned if item[0] < anchor]
+    if not older:
+        return None
+    if use_cutoff:
+        cutoff = anchor - datetime.timedelta(hours=cutoff_hours)
+        old_enough = [item for item in older if item[0] <= cutoff]
+        if old_enough:
+            return old_enough[0][1]
+    return older[0][1]
+
+
 def get_latest_version(package: str) -> str:
     info = get_package_info(package)
     return info["info"]["version"]
