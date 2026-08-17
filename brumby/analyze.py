@@ -6,6 +6,7 @@ from .compare import DiffCallback, compare_releases
 from .config import get_settings, is_enabled, load_config
 from .finding import Finding
 from .pypi import (
+    ensure_release,
     find_stable_before,
     find_versions,
     get_package_info,
@@ -171,6 +172,16 @@ def analyze_artifacts(
     return findings
 
 
+def _require_release(pkg_info: dict, package: str, version: str) -> None:
+    """Raise unless an explicitly chosen version is present in pkg_info.
+
+    Absent from both the project index and its own endpoint means the version does
+    not exist, rather than the index merely lagging behind a fresh publish.
+    """
+    if not ensure_release(pkg_info, package, version):
+        raise ValueError(f"version {version} not found for {package}")
+
+
 def resolve_versions(
     package: str,
     cutoff_hours: int = 24,
@@ -180,11 +191,14 @@ def resolve_versions(
     last: bool = False,
     pkg_info: dict | None = None,
 ) -> tuple[str | None, str | None]:
-    if stable_version is not None and new_version is not None:
-        return stable_version, new_version
-
     if pkg_info is None:
         pkg_info = get_package_info(package)
+
+    if new_version is not None:
+        _require_release(pkg_info, package, new_version)
+
+    if stable_version is not None and new_version is not None:
+        return stable_version, new_version
 
     if new_version is not None:
         # An explicitly chosen new version anchors the baseline on its own upload
@@ -229,6 +243,11 @@ def select_assess_mode(
     """
     if pkg_info is None:
         pkg_info = get_package_info(package)
+
+    # Resolved before counting releases: a stale index can hide a package's second
+    # release, and calling that a first release would report on the wrong version.
+    if new_version is not None:
+        _require_release(pkg_info, package, new_version)
 
     versioned = uploaded_versions(pkg_info)
     if len(versioned) == 1:

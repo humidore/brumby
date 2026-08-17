@@ -1,6 +1,7 @@
 import datetime
 
 import pytest
+import requests
 
 from brumby.analyze import find_last_with_cutoff, resolve_versions, select_assess_mode
 
@@ -89,7 +90,16 @@ def test_resolve_versions_ignores_cutoff_for_last_two_with_supplied_new() -> Non
     assert stable == "1.1"
 
 
-def test_resolve_versions_rejects_supplied_new_missing_from_releases() -> None:
+def test_resolve_versions_rejects_supplied_new_missing_from_releases(monkeypatch) -> None:
+    # A version absent from the index is looked up on its own endpoint before being
+    # rejected, so stub that lookup out to keep the test offline.
+    from brumby import pypi
+
+    def _not_found(_package: str, _version: str, session=None) -> list[dict]:
+        raise requests.exceptions.RetryError("too many 404s")
+
+    monkeypatch.setattr(pypi, "get_release_files", _not_found)
+
     with pytest.raises(ValueError, match="9.9"):
         resolve_versions("pkg", cutoff_hours=24, new_version="9.9", pkg_info=_pkg_info())
 
