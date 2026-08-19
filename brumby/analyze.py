@@ -286,17 +286,15 @@ def check_artifacts(
     old_findings = analyze_artifacts(old_artifacts, config, content=content)
     new_findings = analyze_artifacts(new_artifacts, config, content=content)
 
-    diffs: list[tuple] = []
-    if callback:
-        diffs = compare_releases(
-            old_label,
-            old_label,
-            old_findings,
-            new_label,
-            new_findings,
-            callback,
-            kinds=_kinds_map(),
-        )
+    diffs = compare_releases(
+        old_label,
+        old_label,
+        old_findings,
+        new_label,
+        new_findings,
+        callback,
+        kinds=_kinds_map(),
+    )
     return old_findings, new_findings, diffs
 
 
@@ -407,13 +405,11 @@ def check_package(
     stable_findings = analyze_release(stable_artifacts, pkg_info, stable_version, config, content)
     new_findings = analyze_release(new_artifacts, pkg_info, new_version, config, content)
 
-    diffs: list[tuple] = []
-    if callback:
-        diffs = compare_releases(
-            package, stable_version, stable_findings,
-            new_version, new_findings,
-            callback, kinds=_kinds_map(),
-        )
+    diffs = compare_releases(
+        package, stable_version, stable_findings,
+        new_version, new_findings,
+        callback, kinds=_kinds_map(),
+    )
 
     for spec in get_finders(scope="comparison"):
         if not is_enabled(config, spec.name, spec.default_enabled):

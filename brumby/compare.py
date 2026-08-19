@@ -36,10 +36,14 @@ def compare_releases(
     old_findings: list[Finding],
     new_version: str,
     new_findings: list[Finding],
-    callback: DiffCallback,
+    callback: DiffCallback | None,
     kinds: dict[str, str] | None = None,
 ) -> list[Diff]:
-    """Compare findings between two releases and fire callback on differences.
+    """Compare findings between two releases and return the diffs.
+
+    The diff list is always computed; callback (if given) additionally fires for
+    each difference as it's found — it's for reporting/printing, not for gating
+    whether the diff itself is computed.
 
     For informational findings: fires when the value set changes in either direction.
     For sketchy findings: fires only when new values appear (new - old ≠ ∅).
@@ -75,6 +79,8 @@ def compare_releases(
             added = new_vals - old_vals
             if not added:
                 continue  # only went away — that's fine
+
+        if callback:
             callback(
                 package,
                 old_version,
@@ -87,20 +93,6 @@ def compare_releases(
                 new_sources,
                 kind,
             )
-            diffs.append((name, resource, old_vals, new_vals, old_sources, new_sources, kind))
-        else:
-            callback(
-                package,
-                old_version,
-                new_version,
-                name,
-                resource,
-                old_vals,
-                new_vals,
-                old_sources,
-                new_sources,
-                kind,
-            )
-            diffs.append((name, resource, old_vals, new_vals, old_sources, new_sources, kind))
+        diffs.append((name, resource, old_vals, new_vals, old_sources, new_sources, kind))
 
     return diffs
