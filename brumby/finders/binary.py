@@ -1,5 +1,7 @@
 """Native binary detection: ELF, PE/EFI, Mach-O, a.out, COM, musl-in-glibc-wheel."""
 
+import re
+
 from ..artifact import ArtifactView
 from ..finding import Finding
 from ..registry import register
@@ -28,6 +30,7 @@ _AOUT_MAGICS = {
 }
 _EFI_SUBSYSTEMS = {10, 11, 12}
 _BINARY_TYPES = ("elf", "pe", "macho", "aout", "efi", "com")
+_PYTHON_SHEBANG = re.compile(rb"^#!.*\b(?:python(?:\d+(?:\.\d+)*)?|pypy(?:\d+(?:\.\d+)*)?)t?\b", re.IGNORECASE)
 
 
 def _wheel_tags(filename: str) -> str:
@@ -97,6 +100,32 @@ def _is_efi_binary(header: bytes) -> bool:
     return subsystem in _EFI_SUBSYSTEMS
 
 
+def _scan_non_python_py_files(view: ArtifactView) -> dict[str, str]:
+    """Return .py files that look non-Python, cached on the view."""
+    cache = getattr(view, "_cache", None)
+    if cache is not None and "non_python_py_files" in cache:
+        return cache["non_python_py_files"]
+    found: dict[str, str] = {}
+    if view.filetype in ("wheel", "sdist"):
+        for name, header in view.iter_file_headers(256, exts={".py"}):
+            if header[:4] == _ELF:
+                found.setdefault(name, "elf")
+                continue
+            if header[:2] == _PE:
+                found.setdefault(name, "pe")
+                continue
+            if header[:4] in _MACHO:
+                found.setdefault(name, "macho")
+                continue
+            if header.startswith(b"#!"):
+                first_line = header.splitlines()[0]
+                if not _PYTHON_SHEBANG.match(first_line):
+                    found.setdefault(name, first_line[2:].decode("utf-8", errors="replace").strip() or "shebang")
+    if cache is not None:
+        cache["non_python_py_files"] = found
+    return found
+
+
 def find_binary_types(view: ArtifactView, cfg: dict) -> list[Finding]:
     """Return findings for all binary types detected (ELF, PE, Mach-O, a.out, EFI, COM)."""
     found = _scan_binary_headers(view)
@@ -114,6 +143,17 @@ def find_binary_types(view: ArtifactView, cfg: dict) -> list[Finding]:
     if "com" in found:
         results.append(Finding("has_com_binary", _leaf_name(found["com"]), view.filename, view.resource))
     return results
+
+
+@register(
+    "py_file_not_python",
+    ".py files that are actually binary data or use a non-Python shebang",
+    kind="sketchy",
+    needs_content=True,
+)
+def find_py_file_not_python(view: ArtifactView, cfg: dict) -> list[Finding]:
+    found = _scan_non_python_py_files(view)
+    return [Finding("py_file_not_python", _leaf_name(name), view.filename, view.resource) for name in found]
 
 
 @register("has_elf_binary", "Archive contains an ELF binary", kind="sketchy", needs_content=True)
