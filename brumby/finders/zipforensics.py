@@ -1,5 +1,7 @@
 """Zip structural integrity checks for wheel files."""
 
+import stat
+import struct
 from typing import Iterator
 
 from ..artifact import ArtifactView
@@ -8,6 +10,23 @@ from ..registry import register
 
 # Zip version_needed_to_extract values above this are unusual for plain wheels.
 _NORMAL_MAX_VERSION = 45  # Zip64
+
+# Local file header: signature(4) version_needed(2) flag_bits(2) method(2) time(2)
+# date(2) crc32(4) comp_size(4) uncomp_size(4) fname_len(2) extra_len(2).
+_LFH_SIZE = 30
+_LFH_SIGNATURE = b"PK\x03\x04"
+
+# Unix file-type bits (from external_attr >> 16, S_IFMT-masked) that have no
+# business appearing in a wheel or sdist.
+_SUSPECT_TYPES: tuple[tuple[int, str], ...] = (
+    (stat.S_IFLNK, "symlink"),
+    (stat.S_IFIFO, "fifo"),
+    (stat.S_IFSOCK, "socket"),
+    (stat.S_IFCHR, "char_device"),
+    (stat.S_IFBLK, "block_device"),
+)
+
+_DOS_DIR_ATTR = 0x10  # FILE_ATTRIBUTE_DIRECTORY, low word of external_attr
 
 # Well-known extra field tag IDs → short name.  Unlisted tags are shown as hex.
 _TAG_NAMES: dict[int, str] = {
@@ -136,3 +155,113 @@ def find_zip_version_needed(view: ArtifactView, cfg: dict) -> list[Finding]:
         return findings
     except Exception:
         return []
+
+
+@register(
+    "zip_member_order",
+    "Local file headers are stored in a different order than the central directory lists them",
+    kind="sketchy",
+)
+def find_zip_member_order(view: ArtifactView, cfg: dict) -> list[Finding]:
+    if view.filetype != "wheel":
+        return []
+    try:
+        infos = view.infos()
+        cd_order = [i.filename for i in infos]
+        physical_order = [i.filename for i in sorted(infos, key=lambda i: i.header_offset)]
+        for idx, (cd_name, phys_name) in enumerate(zip(cd_order, physical_order)):
+            if cd_name != phys_name:
+                return [
+                    Finding(
+                        "zip_member_order",
+                        f"cd[{idx}]={cd_name} lfh[{idx}]={phys_name}",
+                        view.filename,
+                        view.resource,
+                    )
+                ]
+    except Exception:
+        pass
+    return []
+
+
+@register(
+    "zip_not_contiguous",
+    "Local file entries have a gap or overlap between them instead of being packed back-to-back",
+    kind="sketchy",
+)
+def find_zip_not_contiguous(view: ArtifactView, cfg: dict) -> list[Finding]:
+    if view.filetype != "wheel":
+        return []
+    try:
+        infos = sorted(view.infos(), key=lambda i: i.header_offset)
+        for cur, nxt in zip(infos, infos[1:]):
+            header = view.read_at(cur.header_offset, _LFH_SIZE)
+            if len(header) < _LFH_SIZE or header[:4] != _LFH_SIGNATURE:
+                continue  # can't verify this member's real header, skip the gap it bounds
+            name_len, extra_len = struct.unpack("<HH", header[26:30])
+            data_end = cur.header_offset + _LFH_SIZE + name_len + extra_len + cur.compress_size
+            gap = nxt.header_offset - data_end
+            # A streamed entry (general-purpose bit 3) is followed by a 12- or
+            # 16-byte data descriptor that isn't counted in compress_size above.
+            allowed = {0, 12, 16} if cur.flag_bits & 0x08 else {0}
+            if gap not in allowed:
+                return [
+                    Finding(
+                        "zip_not_contiguous",
+                        f"{cur.filename}->{nxt.filename}:{gap:+d}",
+                        view.filename,
+                        view.resource,
+                    )
+                ]
+    except Exception:
+        pass
+    return []
+
+
+@register(
+    "zip_member_type",
+    "Zip member's Unix mode reports a file type other than regular file or directory",
+    kind="sketchy",
+)
+def find_zip_member_type(view: ArtifactView, cfg: dict) -> list[Finding]:
+    if view.filetype != "wheel":
+        return []
+    findings = []
+    try:
+        for info in view.infos():
+            if info.create_system != 3:  # not Unix-produced, no mode bits to read
+                continue
+            mode = info.external_attr >> 16
+            filetype = stat.S_IFMT(mode)
+            for bit, name in _SUSPECT_TYPES:
+                if filetype == bit:
+                    findings.append(
+                        Finding("zip_member_type", f"{name}:{info.filename}", view.filename, view.resource)
+                    )
+                    break
+    except Exception:
+        return []
+    return findings
+
+
+@register(
+    "zip_dir_no_slash",
+    "Zip entry looks like a directory (by Unix mode or DOS attribute) but its name lacks a trailing slash",
+    kind="sketchy",
+)
+def find_zip_dir_no_slash(view: ArtifactView, cfg: dict) -> list[Finding]:
+    if view.filetype != "wheel":
+        return []
+    findings = []
+    try:
+        for info in view.infos():
+            if info.filename.endswith("/"):
+                continue
+            is_dir = info.external_attr & _DOS_DIR_ATTR != 0
+            if info.create_system == 3:
+                is_dir = is_dir or stat.S_ISDIR(info.external_attr >> 16)
+            if is_dir:
+                findings.append(Finding("zip_dir_no_slash", info.filename, view.filename, view.resource))
+    except Exception:
+        return []
+    return findings

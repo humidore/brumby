@@ -167,9 +167,18 @@ class ArtifactView:
         with opener as arc:
             if isinstance(arc, zipfile.ZipFile):
                 return [i.filename for i in arc.infolist() if not i.is_dir()]
-            
+
             # arc has to be tarfile.Tarfile in this case
             return [m.name for m in arc.getmembers() if not m.isdir()]
+
+    def read_at(self, offset: int, size: int) -> bytes:
+        """Read raw bytes directly from the underlying archive file at a byte offset,
+        bypassing the central directory (used to inspect local file headers)."""
+        fp = self._zip().fp
+        if fp is None:
+            raise ValueError("archive is not open")
+        fp.seek(offset)
+        return fp.read(size)
 
     def iter_file_headers(
         self, n: int = 4, exts: frozenset[str] | set[str] | None = None
