@@ -93,7 +93,7 @@ def poll_updates(
 ) -> int:
     stream = sys.stdout if stream is None else stream
     fetch = fetcher or (lambda: fetch_updates(feed_url))
-    previous: set[str] | None = None
+    previous: set[tuple[str, str | None]] | None = None
     emitted = 0
     done = 0
 
@@ -118,7 +118,7 @@ def poll_updates(
                 wrote = True
         elif previous is not None:
             for project in current_order:
-                if project in previous:
+                if (project, current_versions[project]) in previous:
                     continue
                 print(
                     _format_item(UpdateItem(project, current_versions[project]), with_version),
@@ -127,7 +127,7 @@ def poll_updates(
                 emitted += 1
                 wrote = True
 
-        previous = set(current_versions)
+        previous = {(project, current_versions[project]) for project in current_order}
         if wrote:
             stream.flush()
         done += 1
@@ -156,3 +156,6 @@ def main(argv: list[str] | None = None) -> int:
         include_first=args.include_first,
     )
     return 0
+
+if __name__ == "__main__":
+    main(sys.argv[1:])
