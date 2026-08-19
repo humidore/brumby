@@ -43,6 +43,33 @@ def test_binary_types_detects_versioned_shared_library() -> None:
     assert find_binary_types(view, {}) == [Finding("has_elf_binary", "libcmake.so.3", "pkg-1.0.whl", "wheel")]
 
 
+def test_binary_types_detects_aout_binary() -> None:
+    view = _DummyView([("pkg/bin/legacy", b"\x07\x01....")])
+
+    assert find_binary_types(view, {}) == [Finding("has_aout_binary", "legacy", "pkg-1.0.whl", "wheel")]
+
+
+def test_binary_types_detects_efi_binary() -> None:
+    dos = bytearray(0x100)
+    dos[0:2] = b"MZ"
+    dos[0x3C:0x40] = (0x80).to_bytes(4, "little")
+    dos[0x80:0x84] = b"PE\x00\x00"
+    dos[0x98:0x9A] = (0x10B).to_bytes(2, "little")
+    dos[0xDC:0xDE] = (10).to_bytes(2, "little")
+    view = _DummyView([("pkg/boot/BOOTX64.EFI", bytes(dos))])
+
+    assert find_binary_types(view, {}) == [
+        Finding("has_pe_binary", "BOOTX64.EFI", "pkg-1.0.whl", "wheel"),
+        Finding("has_efi_binary", "BOOTX64.EFI", "pkg-1.0.whl", "wheel"),
+    ]
+
+
+def test_binary_types_detects_com_binary_by_extension() -> None:
+    view = _DummyView([("pkg/bin/driver.com", b"\x01\x02\x03\x04")])
+
+    assert find_binary_types(view, {}) == [Finding("has_com_binary", "driver.com", "pkg-1.0.whl", "wheel")]
+
+
 def test_binary_types_uses_member_name_for_sdist_values() -> None:
     view = _DummyView([("uv-0.11.10.data/scripts/uv", b"\x7fELF....")])
     view.filetype = "sdist"
