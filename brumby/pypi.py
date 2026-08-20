@@ -1,3 +1,4 @@
+from functools import lru_cache
 import datetime
 import logging
 from typing import Any
@@ -13,17 +14,18 @@ _PYPI_BASE = "https://pypi.org/pypi"
 # surfaces as requests.exceptions.RetryError rather than an HTTPError.
 _RELEASE_RETRY = Retry(
     total=3,
-    status_forcelist=(404,),
+    status_forcelist=(404, 413, 429, 502, 503),
     backoff_factor=0.5,
     allowed_methods=("GET",),
 )
 
 log = logging.getLogger(__name__)
 
-
+@lru_cache(maxsize=1)
 def _retrying_session() -> requests.Session:
-    """A session that retries PyPI's briefly-cached 404s."""
+    """A session that retries PyPI's briefly-cached 404s and sets a User-Agent."""
     session = requests.Session()
+    session.headers["User-Agent"] = "brumby (https://github.com/humidore/brumby/)"
     session.mount(_PYPI_BASE, HTTPAdapter(max_retries=_RELEASE_RETRY))
     return session
 
@@ -50,8 +52,9 @@ def get_package_info(package: str) -> dict[str, Any]:
 def get_release_files(
     package: str, version: str, session: requests.Session | None = None
 ) -> list[dict[str, Any]]:
-    getter = requests.get if session is None else session.get
-    resp = getter(f"{_PYPI_BASE}/{package}/{version}/json", timeout=30)
+    if session is None:
+        session = _retrying_session()
+    resp = session.get(f"{_PYPI_BASE}/{package}/{version}/json", timeout=30)
     resp.raise_for_status()
     return resp.json()["urls"]
 
@@ -78,8 +81,6 @@ def ensure_release(pkg_info: dict[str, Any], package: str, version: str) -> bool
             raise
         return False
 
-    if not files:
-        return False
     releases[version] = files
     log.info(
         "%s %s absent from the project index, read from its own endpoint instead",
