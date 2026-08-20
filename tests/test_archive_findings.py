@@ -150,7 +150,7 @@ def test_archive_umask_skips_non_unix_entries() -> None:
 
 def _tar_sdist_bytes(names: list[str], mode: str = "w:gz") -> bytes:
     buf = io.BytesIO()
-    with tarfile.open(fileobj=buf, mode=mode) as tf:  # type: ignore[call-overload]
+    with tarfile.open(fileobj=buf, mode=mode) as tf:
         for name in names:
             payload = b"var x = 1;\n"
             info = tarfile.TarInfo(name)

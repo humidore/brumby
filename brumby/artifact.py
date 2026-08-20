@@ -157,7 +157,7 @@ class ArtifactView:
         return self._cache["member_names"]
 
     def _member_names(self) -> list[str]:
-        if self.filetype != "sdist":
+        if self.filetype == "wheel":
             return [i.filename for i in self.infos() if not i.is_dir()]
         opener = (
             self.artifact.open_local()
@@ -167,7 +167,9 @@ class ArtifactView:
         with opener as arc:
             if isinstance(arc, zipfile.ZipFile):
                 return [i.filename for i in arc.infolist() if not i.is_dir()]
-            return [m.name for m in arc.getmembers() if m.isfile()]
+            
+            # arc has to be tarfile.Tarfile in this case
+            return [m.name for m in arc.getmembers() if not m.isdir()]
 
     def iter_file_headers(
         self, n: int = 4, exts: frozenset[str] | set[str] | None = None
