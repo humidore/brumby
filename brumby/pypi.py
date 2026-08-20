@@ -1,10 +1,33 @@
+from functools import lru_cache
 import datetime
+import logging
 from typing import Any
 
 import requests
 from packaging.version import InvalidVersion, Version
+from requests.adapters import HTTPAdapter, Retry
 
 _PYPI_BASE = "https://pypi.org/pypi"
+
+# PyPI briefly caches the 404 for a version that has only just been published, so
+# treat 404 as retryable when reading a single release. Exhausting these retries
+# surfaces as requests.exceptions.RetryError rather than an HTTPError.
+_RELEASE_RETRY = Retry(
+    total=3,
+    status_forcelist=(404, 413, 429, 502, 503),
+    backoff_factor=0.5,
+    allowed_methods=("GET",),
+)
+
+log = logging.getLogger(__name__)
+
+@lru_cache(maxsize=1)
+def _retrying_session() -> requests.Session:
+    """A session that retries PyPI's briefly-cached 404s and sets a User-Agent."""
+    session = requests.Session()
+    session.headers["User-Agent"] = "brumby (https://github.com/humidore/brumby/)"
+    session.mount(_PYPI_BASE, HTTPAdapter(max_retries=_RELEASE_RETRY))
+    return session
 
 
 def validate_version(version: str) -> str:
@@ -26,10 +49,45 @@ def get_package_info(package: str) -> dict[str, Any]:
     return resp.json()
 
 
-def get_release_files(package: str, version: str) -> list[dict[str, Any]]:
-    resp = requests.get(f"{_PYPI_BASE}/{package}/{version}/json", timeout=30)
+def get_release_files(
+    package: str, version: str, session: requests.Session | None = None
+) -> list[dict[str, Any]]:
+    if session is None:
+        session = _retrying_session()
+    resp = session.get(f"{_PYPI_BASE}/{package}/{version}/json", timeout=30)
     resp.raise_for_status()
     return resp.json()["urls"]
+
+
+def ensure_release(pkg_info: dict[str, Any], package: str, version: str) -> bool:
+    """Make sure a release is present in pkg_info, fetching it if it is not.
+
+    ``/pypi/<pkg>/json`` is cached separately from ``/pypi/<pkg>/<version>/json``,
+    and the latter has no cached copy predating a release, so a version the project
+    index has not caught up to yet can usually be read from its own endpoint.
+    Returns True once the release is present, False when the version has no files.
+    """
+    releases = pkg_info.setdefault("releases", {})
+    if releases.get(version):
+        return True
+
+    try:
+        with _retrying_session() as session:
+            files = get_release_files(package, version, session=session)
+    except requests.exceptions.RetryError:
+        return False
+    except requests.HTTPError as e:
+        if getattr(e.response, "status_code", None) != 404:
+            raise
+        return False
+
+    releases[version] = files
+    log.info(
+        "%s %s absent from the project index, read from its own endpoint instead",
+        package,
+        version,
+    )
+    return True
 
 
 def find_versions(
