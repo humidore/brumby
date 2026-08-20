@@ -1,8 +1,16 @@
+import io
+import tarfile
+import tempfile
 import zipfile
+from pathlib import Path
 
+from brumby.analyze import analyze_artifacts
+from brumby.artifact import Artifact, ArtifactView, make_local_artifact
 from brumby.finders.archive import (
     find_archive_umask,
     find_development_checkout,
+    find_js_file,
+    find_minified_js,
     find_pth_file,
     find_top_level_name_mismatch,
 )
@@ -138,3 +146,59 @@ def test_archive_umask_skips_non_unix_entries() -> None:
     )
 
     assert find_archive_umask(non_unix, {}) == []
+
+
+def _tar_sdist_bytes(names: list[str], mode: str = "w:gz") -> bytes:
+    buf = io.BytesIO()
+    with tarfile.open(fileobj=buf, mode=mode) as tf:
+        for name in names:
+            payload = b"var x = 1;\n"
+            info = tarfile.TarInfo(name)
+            info.size = len(payload)
+            info.mtime = 1700000000
+            tf.addfile(info, io.BytesIO(payload))
+    return buf.getvalue()
+
+
+def _remote_sdist_view(filename: str, data: bytes, resource: str) -> ArtifactView:
+    """A view on an sdist that was downloaded rather than saved locally."""
+    artifact = Artifact(filename, "https://example.invalid/x", "sdist", resource, len(data))
+    artifact._data = data
+    return ArtifactView(artifact)
+
+
+def test_js_finders_inspect_downloaded_tar_sdist() -> None:
+    view = _remote_sdist_view(
+        "demo-1.0.tar.gz",
+        _tar_sdist_bytes(["demo-1.0/demo/app.js", "demo-1.0/demo/vendor.min.js"]),
+        "sdist-format=tar.gz",
+    )
+
+    assert find_js_file(view, {}) == [
+        Finding("has_js_file", True, "demo-1.0.tar.gz", "sdist-format=tar.gz")
+    ]
+    assert find_minified_js(view, {}) == [
+        Finding("has_minified_js", True, "demo-1.0.tar.gz", "sdist-format=tar.gz")
+    ]
+
+
+def test_js_finders_inspect_saved_tar_sdist() -> None:
+    with tempfile.TemporaryDirectory() as tmpdir:
+        path = Path(tmpdir) / "demo-1.0.tar.gz"
+        path.write_bytes(_tar_sdist_bytes(["demo-1.0/demo/app.js"]))
+
+        view = ArtifactView(make_local_artifact(path))
+
+        assert find_js_file(view, {}) == [
+            Finding("has_js_file", True, "demo-1.0.tar.gz", "sdist-format=tar.gz")
+        ]
+
+def test_js_finders_inspect_zip_sdist() -> None:
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w") as zf:
+        zf.writestr("demo-1.0/demo/app.js", b"var x = 1;\n")
+    view = _remote_sdist_view("demo-1.0.zip", buf.getvalue(), "sdist-format=zip")
+
+    assert find_js_file(view, {}) == [
+        Finding("has_js_file", True, "demo-1.0.zip", "sdist-format=zip")
+    ]

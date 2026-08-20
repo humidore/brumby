@@ -145,6 +145,32 @@ class ArtifactView:
     def read_member(self, name: str) -> bytes:
         return self._zip().read(name)
 
+    def member_names(self) -> list[str]:
+        """File member names, for wheels and for sdists in either tar or zip form.
+
+        Reads only the archive index, never member content. Directory entries are
+        excluded. Prefer this over infos() in finders that apply to any archive
+        type, since infos() can only read zips and raises on a tar sdist.
+        """
+        if "member_names" not in self._cache:
+            self._cache["member_names"] = self._member_names()
+        return self._cache["member_names"]
+
+    def _member_names(self) -> list[str]:
+        if self.filetype == "wheel":
+            return [i.filename for i in self.infos() if not i.is_dir()]
+        opener = (
+            self.artifact.open_local()
+            if self.artifact._local_path is not None
+            else self.artifact.open_sdist_remote()
+        )
+        with opener as arc:
+            if isinstance(arc, zipfile.ZipFile):
+                return [i.filename for i in arc.infolist() if not i.is_dir()]
+            
+            # arc has to be tarfile.Tarfile in this case
+            return [m.name for m in arc.getmembers() if not m.isdir()]
+
     def iter_file_headers(
         self, n: int = 4, exts: frozenset[str] | set[str] | None = None
     ) -> Iterator[tuple[str, bytes]]:

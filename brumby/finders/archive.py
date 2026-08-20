@@ -71,8 +71,8 @@ def find_pth_file(view: ArtifactView, cfg: dict) -> list[Finding]:
 
 @register("has_js_file", "Archive contains JavaScript files", kind="sketchy")
 def find_js_file(view: ArtifactView, cfg: dict) -> list[Finding]:
-    for info in view.infos():
-        name = info.filename.lower()
+    for filename in view.member_names():
+        name = filename.lower()
         if name.endswith(".js") and not name.endswith(".min.js"):
             return [Finding("has_js_file", True, view.filename, view.resource)]
     return []
@@ -84,8 +84,8 @@ def find_js_file(view: ArtifactView, cfg: dict) -> list[Finding]:
     kind="sketchy",
 )
 def find_minified_js(view: ArtifactView, cfg: dict) -> list[Finding]:
-    for info in view.infos():
-        if info.filename.lower().endswith(".min.js"):
+    for filename in view.member_names():
+        if filename.lower().endswith(".min.js"):
             return [Finding("has_minified_js", True, view.filename, view.resource)]
     return []
 
