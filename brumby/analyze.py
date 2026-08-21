@@ -101,7 +101,11 @@ def prepare_scan_artifacts(artifacts: list[Artifact]) -> list[Artifact]:
     scan_artifacts = [artifact for _idx, artifact in sorted(selected, key=lambda item: item[0])]
     total_size = sum(artifact.size for artifact in scan_artifacts)
     if total_size > _MAX_SCAN_BYTES:
-        raise ScanSkipped(f"did not scan: selected artifacts total {total_size} bytes")
+        raise ScanSkipped(
+            f"did not scan: selected artifacts total "
+            f"{total_size / (1024 * 1024):.1f} MB "
+            f"(limit {_MAX_SCAN_BYTES // (1024 * 1024)} MB)"
+        )
     return scan_artifacts
 
 

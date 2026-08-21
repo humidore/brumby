@@ -78,7 +78,7 @@ def test_prepare_scan_artifacts_skips_when_selected_total_exceeds_limit() -> Non
     try:
         prepare_scan_artifacts(artifacts)
     except ScanSkipped as exc:
-        assert "did not scan" in str(exc)
+        assert str(exc) == "did not scan: selected artifacts total 480.0 MB (limit 300 MB)"
     else:
         raise AssertionError("expected ScanSkipped")
 
