@@ -275,6 +275,9 @@ def cmd_export(args: argparse.Namespace) -> int:
             old_artifact = _pick_export_artifact(old_artifacts)
             new_artifact = _pick_export_artifact(new_artifacts)
             old_label, new_label = f"{args.package} {stable}", f"{args.package} {new}"
+    except ScanSkipped as e:
+        print(f"{args.package}: {e}")
+        return 0
     except requests.HTTPError as e:
         if _is_404_http_error(e):
             print(f"error: {args.package} not found (HTTP 404)", file=sys.stderr)
