@@ -30,7 +30,7 @@ def test_local_inspect_runs_only_artifact_checks() -> None:
         findings = analyze_artifacts([artifact], {"finders": {}}, content=True)
         names = sorted(f.name for f in findings)
 
-        assert "spawns_from_init" in names
+        assert "spawns_at_import" in names
         assert "platform_wheels" not in names
         assert "reproducible_build" not in names
 
@@ -147,7 +147,7 @@ def test_inspect_single_finder_uses_kind_prefix(capsys) -> None:
 
         assert cmd_inspect(args) == 1
         out = capsys.readouterr().out
-        assert "[i] imports_base64=proxy.py" in out
+        assert "[i] imports_base64=demo/proxy.py" in out
 
 
 def test_inspect_single_finder_reports_metadata_version_as_informational(capsys) -> None:
