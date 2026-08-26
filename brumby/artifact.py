@@ -266,7 +266,8 @@ def make_artifact(file_info: dict) -> Artifact:
     )
 
 
-def make_local_artifact(path: Path) -> Artifact:
+def make_local_artifact(path: Path | str) -> Artifact:
+    path = Path(path)
     filetype, resource = _infer_filetype(path.name)
     artifact = Artifact(
         filename=path.name,
