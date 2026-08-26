@@ -10,8 +10,20 @@ from ..finding import Finding
 from ..registry import register
 
 _PY = frozenset({".py"})
+_PY_JS = frozenset({".py", ".js"})
 
 _BASE64_PAT = re.compile(rb"^\s*(?:import base64|from base64\b)", re.MULTILINE)
+_ALIASED_SPAWN_IMPORT_PAT = re.compile(
+    rb"(?m)^[ \t]*import\b[^\n]*\b(?:os|sys|subprocess)[ \t]+as[ \t]+\w+",
+)
+_BYTE_TOKEN = rb"(?:25[0-5]|2[0-4]\d|1\d\d|\d{1,2})"
+# Bundler content hashes use the base64url alphabet (letters/digits/-/_), so the
+# hash itself can contain a '-' that looks like a word separator (e.g. Vite's
+# "board-BMr-tWox.js" -- the hash is "BMr-tWox", not "tWox"). Try the longer
+# hash-length range first so a lazy, leftmost base split doesn't cut into it.
+_HASHED_JS_LEAF_PAT = re.compile(
+    r"(?i)^(.+?)[.-]([A-Za-z0-9_-]{8,10}|[A-Za-z0-9_-]{6,7})((?:\.chunk)?\.m?js)$"
+)
 
 _NO_RECURSE = (ast.FunctionDef, ast.AsyncFunctionDef, ast.Lambda)
 _OS_SPAWN_ATTRS = {"system", "popen", "execv"}
@@ -67,6 +79,28 @@ def _shannon_entropy(data: bytes) -> float:
     return -sum((c / total) * math.log2(c / total) for c in counts.values())
 
 
+def _looks_like_hash(token: str) -> bool:
+    """A bundler content hash is close to random: it'll almost always carry a
+    digit or mix upper/lower case. A real word in a filename (config, module,
+    router, ...) won't -- path segments are conventionally all-lowercase.
+    """
+    has_digit = any(c.isdigit() for c in token)
+    has_upper = any(c.isupper() for c in token)
+    has_lower = any(c.islower() for c in token)
+    return has_digit or (has_upper and has_lower)
+
+
+def _normalize_js_leaf(leaf: str) -> str:
+    """Collapse a bundler's content-hashed filename (e.g. "vendor-a1b2c3d4.js",
+    "board-BMr-tWox.js") to a stable name, so a routine rebuild with a new
+    hash isn't seen as a brand new file.
+    """
+    m = _HASHED_JS_LEAF_PAT.match(leaf)
+    if m and _looks_like_hash(m.group(2)):
+        return (m.group(1) or "chunk") + ".js"
+    return leaf
+
+
 @register(
     "imports_base64",
     "A .py file imports base64 (common in obfuscated payloads)",
@@ -92,6 +126,22 @@ def find_spawns_at_import(view: ArtifactView, cfg: dict) -> list[Finding]:
     for name, content in view.iter_files(exts=_PY):
         if _has_import_time_spawn(content):
             findings.append(Finding("spawns_at_import", view.relative_name(name), view.filename, view.resource))
+    return findings
+
+
+@register(
+    "init_aliases_spawnable",
+    "__init__.py imports os/sys/subprocess under an alias (evades naive subprocess-call matching)",
+    kind="sketchy",
+    needs_content=True,
+)
+def find_init_aliases_spawnable(view: ArtifactView, cfg: dict) -> list[Finding]:
+    findings: list[Finding] = []
+    for name, content in view.iter_files(exts=_PY):
+        if not name.endswith("__init__.py"):
+            continue
+        if _ALIASED_SPAWN_IMPORT_PAT.search(content):
+            findings.append(Finding("init_aliases_spawnable", view.relative_name(name), view.filename, view.resource))
     return findings
 
 
@@ -145,4 +195,23 @@ def find_high_entropy_blob(view: ArtifactView, cfg: dict) -> list[Finding]:
     for name, content in view.iter_files(exts=_PY):
         if any(len(line) > max_line_length for line in content.split(b"\n")):
             findings.append(Finding("high_entropy_blob", view.relative_name(name), view.filename, view.resource))
+    return findings
+
+
+@register(
+    "long_byte_array",
+    "A .py or .js file contains a long run of comma-separated small integers (0-255) -- likely an encoded/obfuscated byte array fed to eval/decode",
+    kind="sketchy",
+    needs_content=True,
+)
+def find_long_byte_array(view: ArtifactView, cfg: dict) -> list[Finding]:
+    threshold = cfg.get("threshold", 100)
+    pattern = re.compile(_BYTE_TOKEN + rb"(?:\s*,\s*" + _BYTE_TOKEN + rb"){%d,}" % threshold)
+    findings: list[Finding] = []
+    for name, content in view.iter_files(exts=_PY_JS):
+        if pattern.search(content):
+            rel = view.relative_name(name)
+            dirpart, sep, leaf = rel.rpartition("/")
+            value = f"{dirpart}{sep}{_normalize_js_leaf(leaf)}"
+            findings.append(Finding("long_byte_array", value, view.filename, view.resource))
     return findings

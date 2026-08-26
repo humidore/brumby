@@ -39,6 +39,12 @@
 # threshold = 5.5         # Shannon entropy bits/byte (6.0 ≈ base64, 8.0 ≈ random)
 # max_line_length = 8192  # ignore giant lines; long_source_line handles them
 
+# [finders.high_entropy_blob]
+# max_line_length = 8192  # flag .py files with a line longer than this (likely an embedded blob)
+
+# [finders.long_byte_array]
+# threshold = 100         # flag .py/.js files with more than this many comma-separated small ints (0-255)
+
 # [finders.packager_timezone]
 # tolerance_minutes = 2   # accept +/- 2m around whole-hour offsets
 
