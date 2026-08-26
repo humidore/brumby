@@ -246,12 +246,34 @@ def find_metadata_version(view: ArtifactView, cfg: dict) -> list[Finding]:
     scope="metadata",
 )
 def find_giant_version(info: dict, version: str, cfg: dict) -> list[Finding]:
+    """Value is the major version number itself, not a bare True/False.
+
+    A constant True value only ever fires once, at the release that first
+    crosses the threshold -- once a project is on major 6, going to major 7
+    or 8 shows old_vals=new_vals={True} to compare_releases, so the sketchy
+    diff (which only fires on new_vals - old_vals) stays silent for every
+    later jump forever. Reporting the actual major number means each new
+    major crossing is itself a new value and fires again, while an ordinary
+    same-major bump (8.1.8 -> 8.2.0) still produces old_vals == new_vals and
+    stays silent.
+
+    A CalVer major (a plausible year like "2024" or "2025") is the one case
+    where reporting the literal number backfires: it would make every single
+    year rollover look like a fresh "giant version" event forever, for a
+    project where jumping the major every year is the intended, unremarkable
+    versioning scheme -- not a sudden unexplained jump. Collapse any
+    year-shaped major to the constant "20xx" instead, so CalVer projects
+    still fire once (crossing the threshold at all is still worth a look)
+    without re-firing on every year boundary.
+    """
     threshold = cfg.get("threshold", 5)
     try:
         major_str = version.lstrip("v").split(".")[0]
         major = int(major_str)
         if major > threshold:
-            return [Finding("giant_version", True, None, "release")]
+            if len(major_str) == 4 and major_str[:2] in ("19", "20"):
+                return [Finding("giant_version", "20xx", None, "release")]
+            return [Finding("giant_version", major, None, "release")]
     except (ValueError, IndexError):
         pass
     return []
