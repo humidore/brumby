@@ -246,7 +246,7 @@ def find_metadata_version(view: ArtifactView, cfg: dict) -> list[Finding]:
     scope="metadata",
 )
 def find_giant_version(info: dict, version: str, cfg: dict) -> list[Finding]:
-    """Value is the major version number itself, not a bare True/False.
+    """Value is the major version number.
 
     A constant True value only ever fires once, at the release that first
     crosses the threshold -- once a project is on major 6, going to major 7
