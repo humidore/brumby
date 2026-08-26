@@ -2,9 +2,16 @@ import tempfile
 import zipfile
 from pathlib import Path
 
+import brumby.finders.source as source_mod
 from brumby.analyze import analyze_artifacts
 from brumby.artifact import make_local_artifact
-from brumby.finders.source import find_high_entropy_blob, find_high_entropy_source, find_long_source_line
+from brumby.finders.source import (
+    find_giant_python_file,
+    find_high_entropy_blob,
+    find_high_entropy_source,
+    find_long_source_line,
+    find_spawns_at_import,
+)
 from brumby.finding import Finding
 
 
@@ -103,6 +110,43 @@ def test_high_entropy_source_still_reports_string_with_repeated_characters() -> 
     assert find_high_entropy_source(view, {"threshold": 5.5, "max_line_length": 8192}) == [
         Finding("high_entropy_source", "pkg/validation.py", "pkg-1.0.whl", "wheel")
     ]
+
+
+def test_giant_python_file_reports_line_count_over_threshold() -> None:
+    content = b"\n" * 150
+    view = _DummyView([("pkg/data.py", content)])
+
+    assert find_giant_python_file(view, {"threshold": 100}) == [
+        Finding("giant_python_file", "pkg/data.py", "pkg-1.0.whl", "wheel")
+    ]
+
+
+def test_giant_python_file_quiet_under_threshold() -> None:
+    content = b"\n" * 50
+    view = _DummyView([("pkg/data.py", content)])
+
+    assert find_giant_python_file(view, {"threshold": 100}) == []
+
+
+def test_high_entropy_source_skips_giant_files(monkeypatch) -> None:
+    # A file over the giant-file byte-size cutoff is skipped entirely rather
+    # than scored line by line -- giant_python_file covers oversized files
+    # instead. Patch the module constant down so the test doesn't need an
+    # actual megabyte-plus fixture to exercise the skip.
+    monkeypatch.setattr(source_mod, "_GIANT_FILE_BYTES", 100)
+    base64ish = b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
+    content = b"\n".join([base64ish * 4] * 5)  # well over 100 bytes
+    view = _DummyView([("pkg/proxy.py", content)])
+
+    assert find_high_entropy_source(view, {"threshold": 5.5, "max_line_length": 8192}) == []
+
+
+def test_spawns_at_import_skips_giant_files(monkeypatch) -> None:
+    monkeypatch.setattr(source_mod, "_GIANT_FILE_BYTES", 10)
+    content = b"import subprocess\n" + b"\n" * 5 + b"subprocess.call(['ls'])\n"
+    view = _DummyView([("pkg/module.py", content)])
+
+    assert find_spawns_at_import(view, {}) == []
 
 
 def test_high_entropy_blob_reports_overly_long_lines() -> None:

@@ -45,6 +45,12 @@
 # [finders.long_byte_array]
 # threshold = 100         # flag .py/.js files with more than this many comma-separated small ints (0-255)
 
+# [finders.giant_python_file]
+# threshold = 50000       # flag .py files with more lines than this (likely a generated data blob)
+#                         # -- separately, long_source_line/high_entropy_source/high_entropy_blob/
+#                         # spawns_at_import skip any .py file over 1,000,000 bytes outright, rather
+#                         # than scan it line-by-line or ast.parse it (not independently configurable)
+
 # [finders.packager_timezone]
 # tolerance_minutes = 2   # accept +/- 2m around whole-hour offsets
 
