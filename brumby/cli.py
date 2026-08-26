@@ -24,8 +24,15 @@ from .analyze import (
 )
 from .artifact import ArtifactView, make_local_artifact
 from .config import get_settings, get_thresholds, is_enabled, load_config
+from . import network
 from .pypi import get_latest_version, get_package_info, release_upload_bounds, validate_version
 from .registry import get_finders
+
+
+def _load_config(args: argparse.Namespace) -> dict:
+    config = load_config(Path(args.config) if args.config else None)
+    network.configure(config)
+    return config
 
 
 def _fmt_vals(vals: frozenset[Any]) -> str:
@@ -250,6 +257,7 @@ def _extract_artifact_to(artifact: Any, dest: Path) -> None:
 
 
 def cmd_export(args: argparse.Namespace) -> int:
+    _load_config(args)
     old_path = Path(args.package)
     new_path = Path(args.other) if args.other else None
     output = Path(args.output) if args.output else Path(f"brumby-export-{old_path.stem}")
@@ -339,7 +347,7 @@ def _assess_error(project: str, message: str, as_json: bool) -> None:
 
 
 def cmd_check(args: argparse.Namespace) -> int:
-    config = load_config(Path(args.config) if args.config else None)
+    config = _load_config(args)
     old_path = Path(args.package)
     new_path = Path(args.other) if args.other else None
     try:
@@ -458,7 +466,7 @@ def cmd_check(args: argparse.Namespace) -> int:
 
 
 def cmd_assess(args: argparse.Namespace) -> int:
-    config = load_config(Path(args.config) if args.config else None)
+    config = _load_config(args)
     local_path = Path(args.package)
     as_json = args.json
     try:
@@ -526,7 +534,7 @@ def cmd_assess(args: argparse.Namespace) -> int:
 
 def cmd_inspect(args: argparse.Namespace) -> int:
     try:
-        config = load_config(Path(args.config) if args.config else None)
+        config = _load_config(args)
         local_path = Path(args.package)
         if local_path.exists() and local_path.is_file():
             label = str(local_path)
@@ -571,7 +579,7 @@ def cmd_inspect(args: argparse.Namespace) -> int:
 
 
 def cmd_list_finders(args: argparse.Namespace) -> int:
-    config = load_config(Path(args.config) if args.config else None)
+    config = _load_config(args)
     print(f"{'NAME':<35} {'SCOPE':<12} {'KIND':<14} {'CONTENT':<8} {'ON':<4} DESCRIPTION")
     print("-" * 110)
     for spec in get_finders():
@@ -655,6 +663,7 @@ def main() -> None:
                              help="Compare the newest release vs the newest release at least cutoff hours older")
     export.add_argument("--output", "-o", default="", metavar="DIR",
                         help="Output directory (default: ./brumby-export-<package>)")
+    export.add_argument("--config", default="", metavar="FILE", help="Path to brumby.toml")
     export.add_argument("--save-artifacts", default="", metavar="DIR",
                         help="Also save downloaded artifacts into DIR")
     export.add_argument("--trace", default="", metavar="FILE",

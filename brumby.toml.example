@@ -60,3 +60,17 @@
 # [thresholds]
 # sus = 1             # min sketchy findings for "assess" to report high risk (default: 1)
 # informational = 0   # min informational findings for "assess" to report high risk (default: 0)
+
+# Both default to no proxy and no rewriting -- plain unproxied internet access.
+# Configured separately since metadata (small PyPI JSON lookups) and artifacts
+# (often large wheel/sdist downloads) may need routing through different things
+# (e.g. a corporate proxy for one, a local mirror for the other).
+
+# [network.metadata]
+# proxy = "http://127.0.0.1:8080"           # route PyPI JSON metadata fetches through this proxy
+# url_replace = {}                          # {search: replace} plain substring rewrites, applied
+#                                            # to the URL before fetching (not a regex)
+
+# [network.artifacts]
+# proxy = "http://127.0.0.1:8080"           # route artifact (wheel/sdist) downloads through this proxy
+# url_replace = { "https://" = "http://" }  # e.g. force plain HTTP through a non-TLS mock proxy

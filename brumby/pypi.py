@@ -8,6 +8,8 @@ import requests
 from packaging.version import InvalidVersion, Version
 from requests.adapters import HTTPAdapter, Retry
 
+from . import network
+
 _PYPI_BASE = "https://pypi.org/pypi"
 
 # PyPI briefly caches the 404 for a version that has only just been published, so
@@ -46,7 +48,8 @@ def validate_version(version: str) -> str:
 
 @keke.ktrace("package")
 def get_package_info(package: str) -> dict[str, Any]:
-    resp = requests.get(f"{_PYPI_BASE}/{package}/json", timeout=30)
+    url, proxies = network.prepare_request("metadata", f"{_PYPI_BASE}/{package}/json")
+    resp = requests.get(url, timeout=30, proxies=proxies)
     resp.raise_for_status()
     return resp.json()
 
@@ -57,7 +60,8 @@ def get_release_files(
 ) -> list[dict[str, Any]]:
     if session is None:
         session = _retrying_session()
-    resp = session.get(f"{_PYPI_BASE}/{package}/{version}/json", timeout=30)
+    url, proxies = network.prepare_request("metadata", f"{_PYPI_BASE}/{package}/{version}/json")
+    resp = session.get(url, timeout=30, proxies=proxies)
     resp.raise_for_status()
     return resp.json()["urls"]
 

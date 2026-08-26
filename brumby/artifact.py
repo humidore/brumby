@@ -8,6 +8,8 @@ from typing import Iterator, Literal
 import keke
 import requests
 
+from . import network
+
 
 @dataclass
 class Artifact:
@@ -24,7 +26,8 @@ class Artifact:
     @keke.ktrace("self.filename")
     def data(self) -> bytes:
         if self._data is None:
-            resp = requests.get(self.url, timeout=120)
+            url, proxies = network.prepare_request("artifacts", self.url)
+            resp = requests.get(url, timeout=120, proxies=proxies)
             resp.raise_for_status()
             self._data = resp.content
         return self._data
