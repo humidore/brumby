@@ -57,7 +57,7 @@ def test_assess_reports_high_risk_for_first_release_without_scanning(
     monkeypatch.setattr(cli, "get_artifacts", _boom)
     monkeypatch.setattr(cli, "check_package", _boom)
 
-    assert cli.cmd_assess(_args()) == 1
+    assert cli.cmd_assess(_args()) == 0
     assert capsys.readouterr().out == cli._assess_line("demo", "high") + "\n"
 
 
@@ -90,7 +90,7 @@ def test_assess_check_mode_is_high_risk_for_any_sketchy_diff_by_default(
         ),
     )
 
-    assert cli.cmd_assess(_args()) == 1
+    assert cli.cmd_assess(_args()) == 0
     out = capsys.readouterr().out
     assert out == cli._assess_line("demo", "high") + "\n"
 
@@ -149,7 +149,7 @@ def test_assess_inspect_mode_is_high_risk_for_any_sketchy_finding(
         ],
     )
 
-    assert cli.cmd_assess(_args()) == 1
+    assert cli.cmd_assess(_args()) == 0
     out = capsys.readouterr().out
     assert out == cli._assess_line("demo", "high") + "\n"
 
@@ -234,7 +234,7 @@ def test_assess_json_emits_project_and_risk(monkeypatch, capsys) -> None:
     assert json.loads(out) == {"project": "demo", "risk": "average"}
 
 
-def test_assess_json_high_risk_still_exits_1(monkeypatch, capsys) -> None:
+def test_assess_json_high_risk_exits_0(monkeypatch, capsys) -> None:
     monkeypatch.setattr(cli, "get_package_info", lambda package: _pkg_info())
     monkeypatch.setattr(
         cli,
@@ -261,7 +261,7 @@ def test_assess_json_high_risk_still_exits_1(monkeypatch, capsys) -> None:
         ),
     )
 
-    assert cli.cmd_assess(_args(as_json=True)) == 1
+    assert cli.cmd_assess(_args(as_json=True)) == 0
     out = capsys.readouterr().out
     assert json.loads(out) == {"project": "demo", "risk": "high"}
 

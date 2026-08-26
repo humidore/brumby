@@ -501,7 +501,7 @@ def cmd_assess(args: argparse.Namespace) -> int:
         return 1
 
     _assess_emit(project, risk, as_json)
-    return 1 if risk == "high" else 0
+    return 0
 
 
 def cmd_inspect(args: argparse.Namespace) -> int:
