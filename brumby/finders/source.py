@@ -79,6 +79,28 @@ def _shannon_entropy(data: bytes) -> float:
     return -sum((c / total) * math.log2(c / total) for c in counts.values())
 
 
+# A real quarantined-malware pair (ensmallen 0.8.100 -> 0.8.101) surfaced a
+# legitimate 80MB/2.08M-line generated dataset-URL catalog bundled in the
+# wheel. Per-line entropy scoring and full-file ast.parse are cheap per line
+# but their cost is linear in file size, so a file this size turns each of
+# them into tens of seconds of CPU per wheel copy (and prepare_scan_artifacts
+# can keep up to 4 copies of the same file across OS-bucketed wheels) for a
+# file that, on inspection, contains nothing worth a line-by-line look. Gate
+# the skip on raw byte size (already in hand from iter_files(), no extra work
+# to compute) rather than line count -- it's the byte volume that drives the
+# cost of splitting/parsing/entropy-scoring, and it's cheaper to check.
+_GIANT_FILE_BYTES = 1_000_000
+
+# giant_python_file's own threshold is a much smaller line count: a file this
+# large is itself worth flagging (see giant_python_file below) well before it
+# reaches the size where the other finders bail out.
+_GIANT_FILE_LINES = 50_000
+
+
+def _line_count(content: bytes) -> int:
+    return content.count(b"\n") + 1
+
+
 def _looks_like_hash(token: str) -> bool:
     """A bundler content hash is close to random: it'll almost always carry a
     digit or mix upper/lower case. A real word in a filename (config, module,
@@ -138,6 +160,21 @@ def find_imports_base64(view: ArtifactView, cfg: dict) -> list[Finding]:
 
 
 @register(
+    "giant_python_file",
+    f"A .py file has more than {_GIANT_FILE_LINES:,} lines -- almost certainly a generated data blob rather than hand-written or even machine-generated source",
+    kind="sketchy",
+    needs_content=True,
+)
+def find_giant_python_file(view: ArtifactView, cfg: dict) -> list[Finding]:
+    threshold = cfg.get("threshold", _GIANT_FILE_LINES)
+    findings: list[Finding] = []
+    for name, content in view.iter_files(exts=_PY):
+        if _line_count(content) > threshold:
+            findings.append(Finding("giant_python_file", view.relative_name(name), view.filename, view.resource))
+    return findings
+
+
+@register(
     "spawns_at_import",
     "A .py file spawns a subprocess/shell/exec from top-level code (runs the moment the module is imported, not just when a function is called)",
     kind="sketchy",
@@ -146,6 +183,8 @@ def find_imports_base64(view: ArtifactView, cfg: dict) -> list[Finding]:
 def find_spawns_at_import(view: ArtifactView, cfg: dict) -> list[Finding]:
     findings: list[Finding] = []
     for name, content in view.iter_files(exts=_PY):
+        if len(content) > _GIANT_FILE_BYTES:
+            continue
         if _has_import_time_spawn(content):
             findings.append(Finding("spawns_at_import", view.relative_name(name), view.filename, view.resource))
     return findings
@@ -177,6 +216,8 @@ def find_long_source_line(view: ArtifactView, cfg: dict) -> list[Finding]:
     threshold = cfg.get("threshold", 500)
     findings: list[Finding] = []
     for name, content in view.iter_files(exts=_PY):
+        if len(content) > _GIANT_FILE_BYTES:
+            continue
         for line in content.split(b"\n"):
             if len(line) > threshold:
                 findings.append(Finding("long_source_line", view.relative_name(name), view.filename, view.resource))
@@ -195,6 +236,8 @@ def find_high_entropy_source(view: ArtifactView, cfg: dict) -> list[Finding]:
     max_line_length = cfg.get("max_line_length", 8192)
     findings: list[Finding] = []
     for name, content in view.iter_files(exts=_PY):
+        if len(content) > _GIANT_FILE_BYTES:
+            continue
         for line in content.split(b"\n"):
             if len(line) > max_line_length:
                 continue
@@ -217,6 +260,8 @@ def find_high_entropy_blob(view: ArtifactView, cfg: dict) -> list[Finding]:
     max_line_length = cfg.get("max_line_length", 8192)
     findings: list[Finding] = []
     for name, content in view.iter_files(exts=_PY):
+        if len(content) > _GIANT_FILE_BYTES:
+            continue
         if any(len(line) > max_line_length for line in content.split(b"\n")):
             findings.append(Finding("high_entropy_blob", view.relative_name(name), view.filename, view.resource))
     return findings
