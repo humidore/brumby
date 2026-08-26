@@ -48,10 +48,43 @@ def test_platform_wheels_emits_only_for_platform_wheels() -> None:
     assert find_platform_wheels(platform, {}) == [Finding("platform_wheels", True, None, "wheel")]
 
 
-def test_giant_version_uses_boolean_value() -> None:
+def test_giant_version_uses_major_number_value() -> None:
     assert find_giant_version({}, "6.0", {"threshold": 5}) == [
-        Finding("giant_version", True, None, "release")
+        Finding("giant_version", 6, None, "release")
     ]
+
+
+def test_giant_version_fires_again_on_each_new_major() -> None:
+    # A constant True value would show old_vals == new_vals == {True} for every
+    # major bump after the first one that crosses the threshold, so
+    # compare_releases (sketchy fires only on new_vals - old_vals) would go
+    # silent forever after the initial crossing. The major number itself makes
+    # 6 -> 7 -> 8 each register as a new value, while an ordinary same-major
+    # bump (8.1.8 -> 8.2.0) still finds nothing new.
+    assert find_giant_version({}, "7.0", {"threshold": 5}) == [
+        Finding("giant_version", 7, None, "release")
+    ]
+    assert find_giant_version({}, "7.0", {"threshold": 5}) != find_giant_version(
+        {}, "8.0", {"threshold": 5}
+    )
+    assert find_giant_version({}, "8.1.8", {"threshold": 5}) == find_giant_version(
+        {}, "8.2.0", {"threshold": 5}
+    )
+
+
+def test_giant_version_calver_uses_stable_sentinel() -> None:
+    # A year-shaped major (e.g. CalVer "2024.1.0") would otherwise re-fire as
+    # a distinct new value every single year rollover, even though bumping
+    # the major every year is that project's normal, intended scheme -- not a
+    # surprise jump. Collapsing it to a constant sentinel means it still
+    # fires once (crossing the threshold at all), but a year boundary alone
+    # produces old_vals == new_vals and stays silent.
+    assert find_giant_version({}, "2024.1.0", {"threshold": 5}) == [
+        Finding("giant_version", "20xx", None, "release")
+    ]
+    assert find_giant_version({}, "2024.1.0", {"threshold": 5}) == find_giant_version(
+        {}, "2025.3.0", {"threshold": 5}
+    )
 
 
 def test_packager_timezone_works_for_zip_sdist() -> None:
