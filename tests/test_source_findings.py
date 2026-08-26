@@ -74,6 +74,37 @@ def test_high_entropy_source_skips_overly_long_lines() -> None:
     assert find_high_entropy_source(view, {"threshold": 5.5, "max_line_length": 8192}) == []
 
 
+def test_high_entropy_source_skips_sorted_alphabet_constant() -> None:
+    # The base58 alphabet: high per-character entropy, but every character is
+    # used exactly once -- a charset definition, not encoded/obfuscated data.
+    line = b'    alphabet = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"\n'
+    view = _DummyView([("pkg/validation.py", line)])
+
+    assert find_high_entropy_source(view, {"threshold": 5.5, "max_line_length": 8192}) == []
+
+
+def test_high_entropy_source_skips_unsorted_charset_with_no_repeats() -> None:
+    # A url-safe-token charset in "readable" order (lowercase, then uppercase,
+    # then digits) rather than ascending byte order -- still a set of unique
+    # symbols, not encoded data, so it should be skipped the same way.
+    line = b'    allowed = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_"\n'
+    view = _DummyView([("pkg/service.py", line)])
+
+    assert find_high_entropy_source(view, {"threshold": 5.5, "max_line_length": 8192}) == []
+
+
+def test_high_entropy_source_still_reports_string_with_repeated_characters() -> None:
+    # Same alphabet, shuffled, with four characters (h, i, g, j) repeated --
+    # no longer a clean set of unique symbols, still looks like a real payload.
+    shuffled = b"qatyxbmpencrfd39ks6ug5wojhi2z710vl48UVWXYZABCDEFGHJKLMNPQRSTghij"
+    line = b'    blob = "' + shuffled + b'"\n'
+    view = _DummyView([("pkg/validation.py", line)])
+
+    assert find_high_entropy_source(view, {"threshold": 5.5, "max_line_length": 8192}) == [
+        Finding("high_entropy_source", "pkg/validation.py", "pkg-1.0.whl", "wheel")
+    ]
+
+
 def test_high_entropy_blob_reports_overly_long_lines() -> None:
     base64ish = b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
     view = _DummyView([("pkg/proxy.py", base64ish * 200 + b"\n")])
