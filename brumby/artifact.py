@@ -5,6 +5,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Iterator, Literal
 
+import keke
 import requests
 
 
@@ -20,6 +21,7 @@ class Artifact:
     _data: bytes | None = field(default=None, repr=False)
     _local_path: Path | None = field(default=None, repr=False)
 
+    @keke.ktrace("self.filename")
     def data(self) -> bytes:
         if self._data is None:
             resp = requests.get(self.url, timeout=120)
@@ -291,6 +293,26 @@ def make_artifact(file_info: dict) -> Artifact:
         size=file_info.get("size", 0),
         upload_time=file_info.get("upload_time_iso_8601", ""),
         digests=file_info.get("digests", {}),
+    )
+
+
+def make_url_artifact(url: str, filename: str | None = None) -> Artifact:
+    """Build an artifact from an arbitrary download URL, with no PyPI metadata.
+
+    Used for artifacts that don't come from a PyPI release index at all — e.g. a
+    known-malicious release fetched from an archive by its original URL, where
+    there is no JSON `files` entry to supply filename/size/digests. Content is
+    fetched lazily over HTTP the same way a normal PyPI-hosted artifact is.
+    """
+    if filename is None:
+        filename = url.rsplit("/", 1)[-1].split("?", 1)[0]
+    filetype, resource = _infer_filetype(filename)
+    return Artifact(
+        filename=filename,
+        url=url,
+        filetype=filetype,
+        resource=resource,
+        size=0,
     )
 
 

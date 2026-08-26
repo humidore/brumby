@@ -1,9 +1,13 @@
 """Source-code analysis finders — read .py file content."""
 
 import ast
+import gc
 import math
 import re
 from collections import Counter
+from contextlib import contextmanager
+
+import keke
 
 from ..artifact import ArtifactView
 from ..finding import Finding
@@ -54,11 +58,27 @@ def _is_spawn_call(call: ast.Call, aliases: dict[str, str]) -> bool:
     return False
 
 
-def _has_import_time_spawn(content: bytes) -> bool:
+@contextmanager
+def _gc_disabled():
+    was_enabled = gc.isenabled()
+    gc.disable()
     try:
-        tree = ast.parse(content)
-    except (SyntaxError, ValueError, RecursionError):
-        return False
+        yield
+    finally:
+        if was_enabled:
+            gc.enable()
+
+
+def _has_import_time_spawn(content: bytes) -> bool:
+    # ast.parse builds one large, long-lived object graph in a single call;
+    # on multi-million-node files most of its wall time is GC pause, not
+    # tokenizing. Short-lived CLI process, so disabling GC here is free --
+    # refcounting still frees temporaries, and cycles die at process exit.
+    with _gc_disabled():
+        try:
+            tree = ast.parse(content)
+        except (SyntaxError, ValueError, RecursionError):
+            return False
 
     aliases: dict[str, str] = {}
     for node in _import_time_nodes(tree):
@@ -180,6 +200,7 @@ def find_giant_python_file(view: ArtifactView, cfg: dict) -> list[Finding]:
     kind="sketchy",
     needs_content=True,
 )
+@keke.ktrace("view.filename")
 def find_spawns_at_import(view: ArtifactView, cfg: dict) -> list[Finding]:
     findings: list[Finding] = []
     for name, content in view.iter_files(exts=_PY):
@@ -231,6 +252,7 @@ def find_long_source_line(view: ArtifactView, cfg: dict) -> list[Finding]:
     kind="sketchy",
     needs_content=True,
 )
+@keke.ktrace("view.filename")
 def find_high_entropy_source(view: ArtifactView, cfg: dict) -> list[Finding]:
     threshold = cfg.get("threshold", 5.5)
     max_line_length = cfg.get("max_line_length", 8192)

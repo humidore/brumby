@@ -3,6 +3,7 @@ import datetime
 import logging
 from typing import Any
 
+import keke
 import requests
 from packaging.version import InvalidVersion, Version
 from requests.adapters import HTTPAdapter, Retry
@@ -43,12 +44,14 @@ def validate_version(version: str) -> str:
     return version
 
 
+@keke.ktrace("package")
 def get_package_info(package: str) -> dict[str, Any]:
     resp = requests.get(f"{_PYPI_BASE}/{package}/json", timeout=30)
     resp.raise_for_status()
     return resp.json()
 
 
+@keke.ktrace("package", "version")
 def get_release_files(
     package: str, version: str, session: requests.Session | None = None
 ) -> list[dict[str, Any]]:
