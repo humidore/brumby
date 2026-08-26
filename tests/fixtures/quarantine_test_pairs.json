@@ -1,0 +1,1490 @@
+[
+  {
+    "project": "bramin",
+    "group": "malware-cluster",
+    "old": {
+      "version": "0.0.1",
+      "date": "2020-01-02 07:21:06",
+      "files": [
+        {
+          "filename": "bramin-0.0.1-py3-none-any.whl",
+          "url": "https://files.pythonhosted.org/packages/50/08/c8ab85fd0fa115f6873c0a36410fbc36c9ac40d0aa6a86a628899a788d9f/bramin-0.0.1-py3-none-any.whl"
+        },
+        {
+          "filename": "bramin-0.0.1-py3.6.egg",
+          "url": "https://files.pythonhosted.org/packages/52/04/e559d5374d07d5a6d0f46aefc7643ca102192198420bdbee243d1f5d8fcd/bramin-0.0.1-py3.6.egg"
+        },
+        {
+          "filename": "bramin-0.0.1.tar.gz",
+          "url": "https://files.pythonhosted.org/packages/fc/71/0b2fae46d050ee0ec37a2eb178ce7a0b636353ea2b008278bd803471d1af/bramin-0.0.1.tar.gz"
+        }
+      ]
+    },
+    "new": {
+      "version": "0.0.2",
+      "date": "2026-06-05 23:15:45",
+      "files": [
+        {
+          "filename": "bramin-0.0.2-py3-none-any.whl",
+          "url": "https://files.pythonhosted.org/packages/5b/52/1077bcbd1f1044c719d8d2be252709aaa3985bd37fade7631f999b2d79e3/bramin-0.0.2-py3-none-any.whl"
+        }
+      ]
+    }
+  },
+  {
+    "project": "bramin",
+    "group": "malware-cluster",
+    "old": {
+      "version": "0.0.3",
+      "date": "2026-06-05 23:18:58",
+      "files": [
+        {
+          "filename": "bramin-0.0.3-py3-none-any.whl",
+          "url": "https://files.pythonhosted.org/packages/10/64/d72770ed10e593fb0159f8ee2c58d101487e5687269445acf9e324de10fc/bramin-0.0.3-py3-none-any.whl"
+        }
+      ]
+    },
+    "new": {
+      "version": "0.0.4",
+      "date": "2026-06-05 23:24:12",
+      "files": [
+        {
+          "filename": "bramin-0.0.4-py3-none-any.whl",
+          "url": "https://files.pythonhosted.org/packages/99/5c/9aeee04e102fb785bb0933afd1275808b870df51a37e7dbc3f8f4fa8362a/bramin-0.0.4-py3-none-any.whl"
+        }
+      ]
+    }
+  },
+  {
+    "project": "cmd2func",
+    "group": "malware-cluster",
+    "old": {
+      "version": "0.2.1",
+      "date": "2024-04-16 07:57:09",
+      "files": [
+        {
+          "filename": "cmd2func-0.2.1-py3-none-any.whl",
+          "url": "https://files.pythonhosted.org/packages/87/e0/442a26b3f49344fdaa6b1314dac0cfa98a23d98dccd624f4ebd5a4068f16/cmd2func-0.2.1-py3-none-any.whl"
+        },
+        {
+          "filename": "cmd2func-0.2.1.tar.gz",
+          "url": "https://files.pythonhosted.org/packages/5d/a3/c370548faeec52eb09f14f961beddd30d5680f9b7c14efc08df6a5062d56/cmd2func-0.2.1.tar.gz"
+        }
+      ]
+    },
+    "new": {
+      "version": "0.2.2",
+      "date": "2026-06-05 23:18:52",
+      "files": [
+        {
+          "filename": "cmd2func-0.2.2-py3-none-any.whl",
+          "url": "https://files.pythonhosted.org/packages/09/c4/9296b151f3afa5c724e40e3f1da320c9ec8a06a3a796b488614f8149271a/cmd2func-0.2.2-py3-none-any.whl"
+        }
+      ]
+    }
+  },
+  {
+    "project": "cmd2func",
+    "group": "malware-cluster",
+    "old": {
+      "version": "0.2.2",
+      "date": "2026-06-05 23:18:52",
+      "files": [
+        {
+          "filename": "cmd2func-0.2.2-py3-none-any.whl",
+          "url": "https://files.pythonhosted.org/packages/09/c4/9296b151f3afa5c724e40e3f1da320c9ec8a06a3a796b488614f8149271a/cmd2func-0.2.2-py3-none-any.whl"
+        }
+      ]
+    },
+    "new": {
+      "version": "0.2.3",
+      "date": "2026-06-05 23:23:58",
+      "files": [
+        {
+          "filename": "cmd2func-0.2.3-py3-none-any.whl",
+          "url": "https://files.pythonhosted.org/packages/c4/3f/73499e767180eb8a29905f1d69a13642325c9724beabb84f425a8c622de7/cmd2func-0.2.3-py3-none-any.whl"
+        }
+      ]
+    }
+  },
+  {
+    "project": "coolbox",
+    "group": "malware-cluster",
+    "old": {
+      "version": "0.4.0",
+      "date": "2025-11-11 05:45:59",
+      "files": [
+        {
+          "filename": "coolbox-0.4.0-py3-none-any.whl",
+          "url": "https://files.pythonhosted.org/packages/f5/fa/f7f6e09634388bca64ec0aa6b2f21812bb039b9fec373b629646ae95b1e9/coolbox-0.4.0-py3-none-any.whl"
+        },
+        {
+          "filename": "coolbox-0.4.0.tar.gz",
+          "url": "https://files.pythonhosted.org/packages/09/82/1f0cfbfd966e7abefb843a0fe5a68422c0ed64d4700c7f5acf4cf5184c81/coolbox-0.4.0.tar.gz"
+        }
+      ]
+    },
+    "new": {
+      "version": "0.4.1",
+      "date": "2026-06-05 23:18:43",
+      "files": [
+        {
+          "filename": "coolbox-0.4.1-py3-none-any.whl",
+          "url": "https://files.pythonhosted.org/packages/9f/02/a14a518d8d7732b6cf4b6bf3eb6c0e9f047cfc1596ef56a15541d6350206/coolbox-0.4.1-py3-none-any.whl"
+        }
+      ]
+    }
+  },
+  {
+    "project": "coolbox",
+    "group": "malware-cluster",
+    "old": {
+      "version": "0.4.1",
+      "date": "2026-06-05 23:18:43",
+      "files": [
+        {
+          "filename": "coolbox-0.4.1-py3-none-any.whl",
+          "url": "https://files.pythonhosted.org/packages/9f/02/a14a518d8d7732b6cf4b6bf3eb6c0e9f047cfc1596ef56a15541d6350206/coolbox-0.4.1-py3-none-any.whl"
+        }
+      ]
+    },
+    "new": {
+      "version": "0.4.2",
+      "date": "2026-06-05 23:23:41",
+      "files": [
+        {
+          "filename": "coolbox-0.4.2-py3-none-any.whl",
+          "url": "https://files.pythonhosted.org/packages/6d/c3/5a9f7d5950cf353626b90cb268393cc54679768d50a474f5c9c4739be52b/coolbox-0.4.2-py3-none-any.whl"
+        }
+      ]
+    }
+  },
+  {
+    "project": "dreamgen",
+    "group": "legit-single-bad-release",
+    "old": {
+      "version": "1.8.0",
+      "date": "2026-06-01 20:43:15",
+      "files": [
+        {
+          "filename": "dreamgen-1.8.0-py3-none-any.whl",
+          "url": "https://files.pythonhosted.org/packages/23/ca/1adba6bb1d81460c544faee8714f19efd50ccac7d1fb3435876c70532e73/dreamgen-1.8.0-py3-none-any.whl"
+        },
+        {
+          "filename": "dreamgen-1.8.0.tar.gz",
+          "url": "https://files.pythonhosted.org/packages/0f/2d/e219784264d4b4509c2bacf6b125c1b896ba0487b06306bed3d0681bffff/dreamgen-1.8.0.tar.gz"
+        }
+      ]
+    },
+    "new": {
+      "version": "1.8.1",
+      "date": "2026-06-07 22:56:37",
+      "files": [
+        {
+          "filename": "dreamgen-1.8.1-py3-none-any.whl",
+          "url": "https://files.pythonhosted.org/packages/17/5b/d156503d17b45fad8acce719202870a7652915141b02ec365f8df88a5b4f/dreamgen-1.8.1-py3-none-any.whl"
+        }
+      ]
+    }
+  },
+  {
+    "project": "durabletask",
+    "group": "legit-single-bad-release",
+    "old": {
+      "version": "0.0.0.dev73",
+      "date": "2026-05-15 17:01:56",
+      "files": [
+        {
+          "filename": "durabletask-0.0.0.dev73-py3-none-any.whl",
+          "url": "https://files.pythonhosted.org/packages/96/d9/5abb06dcf9f7a8c25e43736653d1e9bb14ab3a19348c725dd35d02205f02/durabletask-0.0.0.dev73-py3-none-any.whl"
+        },
+        {
+          "filename": "durabletask-0.0.0.dev73.tar.gz",
+          "url": "https://files.pythonhosted.org/packages/eb/48/194e8821ba59035e9e1fe70b7b6d298087a0bbaa71a3a29512cbe29099c0/durabletask-0.0.0.dev73.tar.gz"
+        }
+      ]
+    },
+    "new": {
+      "version": "1.4.1",
+      "date": "2026-05-19 16:19:48",
+      "files": [
+        {
+          "filename": "durabletask-1.4.1-py3-none-any.whl",
+          "url": "https://files.pythonhosted.org/packages/d2/27/e825ea5e97178636282e77395a045f16d52f81ee9f4ca28716d5bcabafb5/durabletask-1.4.1-py3-none-any.whl"
+        },
+        {
+          "filename": "durabletask-1.4.1.tar.gz",
+          "url": "https://files.pythonhosted.org/packages/cb/bc/57a0775c774665e287d1623bd3b604820939526647983b70a2f669f34ac6/durabletask-1.4.1.tar.gz"
+        }
+      ]
+    }
+  },
+  {
+    "project": "durabletask",
+    "group": "legit-single-bad-release",
+    "old": {
+      "version": "1.4.1",
+      "date": "2026-05-19 16:19:48",
+      "files": [
+        {
+          "filename": "durabletask-1.4.1-py3-none-any.whl",
+          "url": "https://files.pythonhosted.org/packages/d2/27/e825ea5e97178636282e77395a045f16d52f81ee9f4ca28716d5bcabafb5/durabletask-1.4.1-py3-none-any.whl"
+        },
+        {
+          "filename": "durabletask-1.4.1.tar.gz",
+          "url": "https://files.pythonhosted.org/packages/cb/bc/57a0775c774665e287d1623bd3b604820939526647983b70a2f669f34ac6/durabletask-1.4.1.tar.gz"
+        }
+      ]
+    },
+    "new": {
+      "version": "1.4.2",
+      "date": "2026-05-19 16:49:59",
+      "files": [
+        {
+          "filename": "durabletask-1.4.2-py3-none-any.whl",
+          "url": "https://files.pythonhosted.org/packages/f4/c4/08e539a5d5478e7ca8361796d846ebe286711af875b32e6d0b5d3e327a37/durabletask-1.4.2-py3-none-any.whl"
+        },
+        {
+          "filename": "durabletask-1.4.2.tar.gz",
+          "url": "https://files.pythonhosted.org/packages/56/a8/edb5df97dab3201caf0fa7061c76439961eda81df80df4fa51aac8819bf6/durabletask-1.4.2.tar.gz"
+        }
+      ]
+    }
+  },
+  {
+    "project": "durabletask",
+    "group": "legit-single-bad-release",
+    "old": {
+      "version": "1.4.2",
+      "date": "2026-05-19 16:49:59",
+      "files": [
+        {
+          "filename": "durabletask-1.4.2-py3-none-any.whl",
+          "url": "https://files.pythonhosted.org/packages/f4/c4/08e539a5d5478e7ca8361796d846ebe286711af875b32e6d0b5d3e327a37/durabletask-1.4.2-py3-none-any.whl"
+        },
+        {
+          "filename": "durabletask-1.4.2.tar.gz",
+          "url": "https://files.pythonhosted.org/packages/56/a8/edb5df97dab3201caf0fa7061c76439961eda81df80df4fa51aac8819bf6/durabletask-1.4.2.tar.gz"
+        }
+      ]
+    },
+    "new": {
+      "version": "1.4.3",
+      "date": "2026-05-19 16:54:38",
+      "files": [
+        {
+          "filename": "durabletask-1.4.3-py3-none-any.whl",
+          "url": "https://files.pythonhosted.org/packages/9d/10/76f790d4ac8b6cdd0d840e74676e5ab5e8e4b8f2da7bdf5347f2e3a5bfd9/durabletask-1.4.3-py3-none-any.whl"
+        },
+        {
+          "filename": "durabletask-1.4.3.tar.gz",
+          "url": "https://files.pythonhosted.org/packages/2e/87/5430d45c2a21ca7d85e5a544a851a67956f3fe6b9dd765e1fabb2c7c4640/durabletask-1.4.3.tar.gz"
+        }
+      ]
+    }
+  },
+  {
+    "project": "dynamo-release",
+    "group": "legit-single-bad-release",
+    "old": {
+      "version": "1.5.3",
+      "date": "2026-03-17 23:01:52",
+      "files": [
+        {
+          "filename": "dynamo_release-1.5.3-py3-none-any.whl",
+          "url": "https://files.pythonhosted.org/packages/4e/3d/e733831bd4f9609083b39ed14541dc0d2ea6a4f892549957a4301a683d48/dynamo_release-1.5.3-py3-none-any.whl"
+        },
+        {
+          "filename": "dynamo_release-1.5.3.tar.gz",
+          "url": "https://files.pythonhosted.org/packages/bf/d9/d9d6ec73d3733786d22ccc2f022b99f42d0b5f407f5597b721af51ab0a3f/dynamo_release-1.5.3.tar.gz"
+        }
+      ]
+    },
+    "new": {
+      "version": "1.5.4",
+      "date": "2026-06-06 00:10:45",
+      "files": [
+        {
+          "filename": "dynamo_release-1.5.4-py3-none-any.whl",
+          "url": "https://files.pythonhosted.org/packages/4a/52/8b85585fc5392a1342d3e62296a9b79c3e1c48737cf6fd4b1ef47e1cf264/dynamo_release-1.5.4-py3-none-any.whl"
+        }
+      ]
+    }
+  },
+  {
+    "project": "embiggen",
+    "group": "legit-single-bad-release",
+    "old": {
+      "version": "0.11.96",
+      "date": "2026-01-08 12:28:38",
+      "files": [
+        {
+          "filename": "embiggen-0.11.96.tar.gz",
+          "url": "https://files.pythonhosted.org/packages/87/2d/160594b20ad15ff25b7921b5b3abe3619939f66b9a7c9167639ac47b0ec7/embiggen-0.11.96.tar.gz"
+        }
+      ]
+    },
+    "new": {
+      "version": "0.11.97",
+      "date": "2026-06-08 03:10:00",
+      "files": [
+        {
+          "filename": "embiggen-0.11.97-py3-none-any.whl",
+          "url": "https://files.pythonhosted.org/packages/c8/a7/de68666caa05cf898f209e962ebd6c4d22d56bb8432e870fe5ad5f0df52b/embiggen-0.11.97-py3-none-any.whl"
+        }
+      ]
+    }
+  },
+  {
+    "project": "ensmallen",
+    "group": "legit-single-bad-release",
+    "old": {
+      "version": "0.8.100",
+      "date": "2025-09-29 11:31:02",
+      "files": [
+        {
+          "filename": "ensmallen-0.8.100-cp37-abi3-macosx_10_7_x86_64.whl",
+          "url": "https://files.pythonhosted.org/packages/5b/ae/7f52ff5ec223f58681eeff24e3849fe15c3157bbf44ea11c3564cafcebd1/ensmallen-0.8.100-cp37-abi3-macosx_10_7_x86_64.whl"
+        },
+        {
+          "filename": "ensmallen-0.8.100-cp37-abi3-macosx_11_0_arm64.whl",
+          "url": "https://files.pythonhosted.org/packages/9d/02/bc51126223b3166f5135851e36044a86a39a94374059ef7acc7cc3fb943c/ensmallen-0.8.100-cp37-abi3-macosx_11_0_arm64.whl"
+        },
+        {
+          "filename": "ensmallen-0.8.100-cp37-abi3-manylinux2014_x86_64.manylinux_2_17_x86_64.whl",
+          "url": "https://files.pythonhosted.org/packages/cf/7e/eb89ba2e827eb11442fc70f6cd57eb88f124d375898cab6f79bf3fafa95e/ensmallen-0.8.100-cp37-abi3-manylinux2014_x86_64.manylinux_2_17_x86_64.whl"
+        },
+        {
+          "filename": "ensmallen-0.8.100-cp37-abi3-win_amd64.whl",
+          "url": "https://files.pythonhosted.org/packages/0e/3d/689a9a2ef3c99cfb00eff2b9c2e586238f1dcba9c3b5c91f33178b1d26b4/ensmallen-0.8.100-cp37-abi3-win_amd64.whl"
+        }
+      ]
+    },
+    "new": {
+      "version": "0.8.101",
+      "date": "2026-06-08 03:10:24",
+      "files": [
+        {
+          "filename": "ensmallen-0.8.101-py3-none-any.whl",
+          "url": "https://files.pythonhosted.org/packages/53/bf/6210699d6165e632ebad20175808bf71e4a09a48dab3a1e0a4c002d8cc5b/ensmallen-0.8.101-py3-none-any.whl"
+        }
+      ]
+    }
+  },
+  {
+    "project": "executor-engine",
+    "group": "malware-cluster",
+    "old": {
+      "version": "0.3.3",
+      "date": "2025-07-24 23:23:43",
+      "files": [
+        {
+          "filename": "executor_engine-0.3.3-py3-none-any.whl",
+          "url": "https://files.pythonhosted.org/packages/14/12/f85605d39f938f528f6e98d558bfa2e2b1a7a4cb632cbc41568204677624/executor_engine-0.3.3-py3-none-any.whl"
+        },
+        {
+          "filename": "executor_engine-0.3.3.tar.gz",
+          "url": "https://files.pythonhosted.org/packages/7a/9c/28613bea2a6692e954a71af3ca01311ace9d54d3d6e78a46467cd36aef1f/executor_engine-0.3.3.tar.gz"
+        }
+      ]
+    },
+    "new": {
+      "version": "0.3.4",
+      "date": "2026-06-05 23:18:49",
+      "files": [
+        {
+          "filename": "executor_engine-0.3.4-py3-none-any.whl",
+          "url": "https://files.pythonhosted.org/packages/7c/6c/d827f37cab98b90c60e4e2d27c85fc15e44f32306f6d1c3ff34f3a76f2f1/executor_engine-0.3.4-py3-none-any.whl"
+        }
+      ]
+    }
+  },
+  {
+    "project": "executor-engine",
+    "group": "malware-cluster",
+    "old": {
+      "version": "0.3.4",
+      "date": "2026-06-05 23:18:49",
+      "files": [
+        {
+          "filename": "executor_engine-0.3.4-py3-none-any.whl",
+          "url": "https://files.pythonhosted.org/packages/7c/6c/d827f37cab98b90c60e4e2d27c85fc15e44f32306f6d1c3ff34f3a76f2f1/executor_engine-0.3.4-py3-none-any.whl"
+        }
+      ]
+    },
+    "new": {
+      "version": "0.3.5",
+      "date": "2026-06-05 23:23:52",
+      "files": [
+        {
+          "filename": "executor_engine-0.3.5-py3-none-any.whl",
+          "url": "https://files.pythonhosted.org/packages/e8/c5/ddb0a3baebdfd3a3a3e3f73dd1f851e94ee263a07720433adc68dc442058/executor_engine-0.3.5-py3-none-any.whl"
+        }
+      ]
+    }
+  },
+  {
+    "project": "executor-http",
+    "group": "malware-cluster",
+    "old": {
+      "version": "0.1.2",
+      "date": "2024-09-18 06:22:17",
+      "files": [
+        {
+          "filename": "executor_http-0.1.2-py3-none-any.whl",
+          "url": "https://files.pythonhosted.org/packages/79/e2/532d40c50139c99139ed860273165c5abf6b16c592f161a6f5eece1a894d/executor_http-0.1.2-py3-none-any.whl"
+        },
+        {
+          "filename": "executor_http-0.1.2.tar.gz",
+          "url": "https://files.pythonhosted.org/packages/fa/fb/4964012b6b9cc4d7317d94340d4cac724afa73cbbca1d27a89035d006f9d/executor_http-0.1.2.tar.gz"
+        }
+      ]
+    },
+    "new": {
+      "version": "0.1.3",
+      "date": "2026-06-05 23:18:50",
+      "files": [
+        {
+          "filename": "executor_http-0.1.3-py3-none-any.whl",
+          "url": "https://files.pythonhosted.org/packages/40/09/cca1f4298a805a33a9a6d3c5fe874606975eb8013041ee759a0d3717c280/executor_http-0.1.3-py3-none-any.whl"
+        }
+      ]
+    }
+  },
+  {
+    "project": "executor-http",
+    "group": "malware-cluster",
+    "old": {
+      "version": "0.1.3",
+      "date": "2026-06-05 23:18:50",
+      "files": [
+        {
+          "filename": "executor_http-0.1.3-py3-none-any.whl",
+          "url": "https://files.pythonhosted.org/packages/40/09/cca1f4298a805a33a9a6d3c5fe874606975eb8013041ee759a0d3717c280/executor_http-0.1.3-py3-none-any.whl"
+        }
+      ]
+    },
+    "new": {
+      "version": "0.1.4",
+      "date": "2026-06-05 23:23:56",
+      "files": [
+        {
+          "filename": "executor_http-0.1.4-py3-none-any.whl",
+          "url": "https://files.pythonhosted.org/packages/bf/21/0ed9e6a37bee872e733993b53467b1d2d47468fd2cfab157fc9fb01ecf2a/executor_http-0.1.4-py3-none-any.whl"
+        }
+      ]
+    }
+  },
+  {
+    "project": "funcdesc",
+    "group": "malware-cluster",
+    "old": {
+      "version": "0.2.1",
+      "date": "2025-09-11 21:44:31",
+      "files": [
+        {
+          "filename": "funcdesc-0.2.1-py3-none-any.whl",
+          "url": "https://files.pythonhosted.org/packages/39/c0/6ca2fa289d9dd890af713ee6721af530a4464f9d6746cb18bfe17d52e113/funcdesc-0.2.1-py3-none-any.whl"
+        },
+        {
+          "filename": "funcdesc-0.2.1.tar.gz",
+          "url": "https://files.pythonhosted.org/packages/67/c1/2fe5bc5194a8659f4433c11682fe9c16acf83cc0a155d165ae3a029ee148/funcdesc-0.2.1.tar.gz"
+        }
+      ]
+    },
+    "new": {
+      "version": "0.2.2",
+      "date": "2026-06-05 23:18:44",
+      "files": [
+        {
+          "filename": "funcdesc-0.2.2-py3-none-any.whl",
+          "url": "https://files.pythonhosted.org/packages/06/28/8e97d726678ea254e29cb85daa5645271b59d96cd61d1dc6ae2be8d61715/funcdesc-0.2.2-py3-none-any.whl"
+        }
+      ]
+    }
+  },
+  {
+    "project": "funcdesc",
+    "group": "malware-cluster",
+    "old": {
+      "version": "0.2.2",
+      "date": "2026-06-05 23:18:44",
+      "files": [
+        {
+          "filename": "funcdesc-0.2.2-py3-none-any.whl",
+          "url": "https://files.pythonhosted.org/packages/06/28/8e97d726678ea254e29cb85daa5645271b59d96cd61d1dc6ae2be8d61715/funcdesc-0.2.2-py3-none-any.whl"
+        }
+      ]
+    },
+    "new": {
+      "version": "0.2.3",
+      "date": "2026-06-05 23:23:44",
+      "files": [
+        {
+          "filename": "funcdesc-0.2.3-py3-none-any.whl",
+          "url": "https://files.pythonhosted.org/packages/ee/07/a3a5d522d90245b00ba11d6f40608c46ce63b4dad69e51f1a197323c4053/funcdesc-0.2.3-py3-none-any.whl"
+        }
+      ]
+    }
+  },
+  {
+    "project": "gpsea",
+    "group": "legit-single-bad-release",
+    "old": {
+      "version": "0.9.13",
+      "date": "2026-01-21 09:33:15",
+      "files": [
+        {
+          "filename": "gpsea-0.9.13-py3-none-any.whl",
+          "url": "https://files.pythonhosted.org/packages/42/7c/a0bf64a12114033e8f6afbe1b1c829fa5ae17c9ab4e9386f6bd4d25d2368/gpsea-0.9.13-py3-none-any.whl"
+        },
+        {
+          "filename": "gpsea-0.9.13.tar.gz",
+          "url": "https://files.pythonhosted.org/packages/82/e2/c6cb4f69345dc882c9d2754d137523f6cd10dc5e04bb581d50a36fbf67c5/gpsea-0.9.13.tar.gz"
+        }
+      ]
+    },
+    "new": {
+      "version": "0.9.14",
+      "date": "2026-06-08 03:09:55",
+      "files": [
+        {
+          "filename": "gpsea-0.9.14-py3-none-any.whl",
+          "url": "https://files.pythonhosted.org/packages/82/12/c1d31012b9e97334d5159ccfbef14ffe95d9970add20ba9293bffca182b6/gpsea-0.9.14-py3-none-any.whl"
+        }
+      ]
+    }
+  },
+  {
+    "project": "guardrails-ai",
+    "group": "legit-single-bad-release",
+    "old": {
+      "version": "0.10.0",
+      "date": "2026-04-03 19:43:07",
+      "files": [
+        {
+          "filename": "guardrails_ai-0.10.0-py3-none-any.whl",
+          "url": "https://files.pythonhosted.org/packages/f7/58/864b849c92fb36f543c0c02e82194a989963da171c00aed75652658887b5/guardrails_ai-0.10.0-py3-none-any.whl"
+        },
+        {
+          "filename": "guardrails_ai-0.10.0.tar.gz",
+          "url": "https://files.pythonhosted.org/packages/5b/02/344d986b727fe2cadd1fba1bb738114c9c387e7e18053ad94371b048f57a/guardrails_ai-0.10.0.tar.gz"
+        }
+      ]
+    },
+    "new": {
+      "version": "0.10.1",
+      "date": "2026-05-12 00:47:09",
+      "files": [
+        {
+          "filename": "guardrails_ai-0.10.1-py3-none-any.whl",
+          "url": "https://files.pythonhosted.org/packages/bd/64/ac804391af42398f69fc7d890ffc6d2b9307b926d4645f90485ef9984dad/guardrails_ai-0.10.1-py3-none-any.whl"
+        },
+        {
+          "filename": "guardrails_ai-0.10.1.tar.gz",
+          "url": "https://files.pythonhosted.org/packages/eb/ac/56807e884246fbc6b3b16b0cdd510dd6af611c1cb7e6e05be102ff8ed57b/guardrails_ai-0.10.1.tar.gz"
+        }
+      ]
+    }
+  },
+  {
+    "project": "magique",
+    "group": "malware-cluster",
+    "old": {
+      "version": "0.6.7",
+      "date": "2025-08-02 22:33:06",
+      "files": [
+        {
+          "filename": "magique-0.6.7-py3-none-any.whl",
+          "url": "https://files.pythonhosted.org/packages/d8/1e/3eaa300f3bd823f9f1ed8385ee3aee59c1c701322628a946a4d72598b789/magique-0.6.7-py3-none-any.whl"
+        }
+      ]
+    },
+    "new": {
+      "version": "0.6.8",
+      "date": "2026-06-05 23:18:47",
+      "files": [
+        {
+          "filename": "magique-0.6.8-py3-none-any.whl",
+          "url": "https://files.pythonhosted.org/packages/50/d2/b764a9af8a672d4ba88e729e19b6f08a4b3eeb8200123569237795a3fc31/magique-0.6.8-py3-none-any.whl"
+        }
+      ]
+    }
+  },
+  {
+    "project": "magique",
+    "group": "malware-cluster",
+    "old": {
+      "version": "0.6.8",
+      "date": "2026-06-05 23:18:47",
+      "files": [
+        {
+          "filename": "magique-0.6.8-py3-none-any.whl",
+          "url": "https://files.pythonhosted.org/packages/50/d2/b764a9af8a672d4ba88e729e19b6f08a4b3eeb8200123569237795a3fc31/magique-0.6.8-py3-none-any.whl"
+        }
+      ]
+    },
+    "new": {
+      "version": "0.6.9",
+      "date": "2026-06-05 23:23:48",
+      "files": [
+        {
+          "filename": "magique-0.6.9-py3-none-any.whl",
+          "url": "https://files.pythonhosted.org/packages/fb/cf/376a097f8893ac5c63e3d067b233bf16de9e3c980d8da0ac887a5619b297/magique-0.6.9-py3-none-any.whl"
+        }
+      ]
+    }
+  },
+  {
+    "project": "magique-ai",
+    "group": "malware-cluster",
+    "old": {
+      "version": "0.4.3",
+      "date": "2025-07-27 10:18:12",
+      "files": [
+        {
+          "filename": "magique_ai-0.4.3-py3-none-any.whl",
+          "url": "https://files.pythonhosted.org/packages/51/7f/ce0d7f00f97e827dcdf2b09a74be28a39ea41f235304dc4aa744408cbc4e/magique_ai-0.4.3-py3-none-any.whl"
+        }
+      ]
+    },
+    "new": {
+      "version": "0.4.4",
+      "date": "2026-06-05 23:18:48",
+      "files": [
+        {
+          "filename": "magique_ai-0.4.4-py3-none-any.whl",
+          "url": "https://files.pythonhosted.org/packages/3c/1a/ada970955660bc1f28d7c83ff0fb8ad00a95f077f51d3fb87f8c35ac6c7a/magique_ai-0.4.4-py3-none-any.whl"
+        }
+      ]
+    }
+  },
+  {
+    "project": "magique-ai",
+    "group": "malware-cluster",
+    "old": {
+      "version": "0.4.4",
+      "date": "2026-06-05 23:18:48",
+      "files": [
+        {
+          "filename": "magique_ai-0.4.4-py3-none-any.whl",
+          "url": "https://files.pythonhosted.org/packages/3c/1a/ada970955660bc1f28d7c83ff0fb8ad00a95f077f51d3fb87f8c35ac6c7a/magique_ai-0.4.4-py3-none-any.whl"
+        }
+      ]
+    },
+    "new": {
+      "version": "0.4.5",
+      "date": "2026-06-05 23:23:50",
+      "files": [
+        {
+          "filename": "magique_ai-0.4.5-py3-none-any.whl",
+          "url": "https://files.pythonhosted.org/packages/33/51/f36b85977bd09b12a88aff94531b608659312497c8856b73353603f11405/magique_ai-0.4.5-py3-none-any.whl"
+        }
+      ]
+    }
+  },
+  {
+    "project": "mem8",
+    "group": "legit-single-bad-release",
+    "old": {
+      "version": "6.0.0",
+      "date": "2025-10-15 20:30:33",
+      "files": [
+        {
+          "filename": "mem8-6.0.0-py3-none-any.whl",
+          "url": "https://files.pythonhosted.org/packages/22/b0/f3b04f9e8147a697d4a5a8982c6301914ec34c6db2f5327532f2072eef32/mem8-6.0.0-py3-none-any.whl"
+        },
+        {
+          "filename": "mem8-6.0.0.tar.gz",
+          "url": "https://files.pythonhosted.org/packages/c3/1a/ecf06d4b6fb4b637c67ea3a82ea121ab394673c22829fbf73189fa25718c/mem8-6.0.0.tar.gz"
+        }
+      ]
+    },
+    "new": {
+      "version": "6.0.1",
+      "date": "2026-06-07 22:57:24",
+      "files": [
+        {
+          "filename": "mem8-6.0.1-py3-none-any.whl",
+          "url": "https://files.pythonhosted.org/packages/0f/d8/144a73f115189b08391dfc6862828cb5e39ed36c680e0ff292afba54c730/mem8-6.0.1-py3-none-any.whl"
+        }
+      ]
+    }
+  },
+  {
+    "project": "mflux-streamlit",
+    "group": "malware-cluster",
+    "old": {
+      "version": "0.0.2",
+      "date": "2026-06-05 09:24:23",
+      "files": [
+        {
+          "filename": "mflux_streamlit-0.0.2-py3-none-any.whl",
+          "url": "https://files.pythonhosted.org/packages/6b/8e/4f50481e2f9ff06046d5a6acd9fd19faa48c83edd0fdd0a7d8d2d80248cb/mflux_streamlit-0.0.2-py3-none-any.whl"
+        },
+        {
+          "filename": "mflux_streamlit-0.0.2.tar.gz",
+          "url": "https://files.pythonhosted.org/packages/7b/e2/ecbc1e620be1f54939d196a3095ac7f7763b37d72a5f1f42806c1f177f65/mflux_streamlit-0.0.2.tar.gz"
+        }
+      ]
+    },
+    "new": {
+      "version": "0.0.3",
+      "date": "2026-06-07 15:23:14",
+      "files": [
+        {
+          "filename": "mflux_streamlit-0.0.3-py3-none-any.whl",
+          "url": "https://files.pythonhosted.org/packages/55/aa/ed575e2fa490de397e5d5c017b1093c8439f6718db903f0fc2d5300ae5c9/mflux_streamlit-0.0.3-py3-none-any.whl"
+        }
+      ]
+    }
+  },
+  {
+    "project": "mistralai",
+    "group": "legit-single-bad-release",
+    "old": {
+      "version": "2.4.5",
+      "date": "2026-05-07 11:46:41",
+      "files": [
+        {
+          "filename": "mistralai-2.4.5-py3-none-any.whl",
+          "url": "https://files.pythonhosted.org/packages/1b/48/2c5c4f853dec32a625c1a3d23809b80cf2e135c3441fe1764f72910dfea9/mistralai-2.4.5-py3-none-any.whl"
+        },
+        {
+          "filename": "mistralai-2.4.5.tar.gz",
+          "url": "https://files.pythonhosted.org/packages/8e/3f/5624d57c5897c83c55d3e4c7dd4127de42ad14fd3183e26566cdc7dca1bf/mistralai-2.4.5.tar.gz"
+        }
+      ]
+    },
+    "new": {
+      "version": "2.4.6",
+      "date": "2026-05-12 00:05:16",
+      "files": [
+        {
+          "filename": "mistralai-2.4.6-py3-none-any.whl",
+          "url": "https://files.pythonhosted.org/packages/20/ff/b7c11e3f970200542814330debc0581e62d610740821f7cb72aed73d73c8/mistralai-2.4.6-py3-none-any.whl"
+        },
+        {
+          "filename": "mistralai-2.4.6.tar.gz",
+          "url": "https://files.pythonhosted.org/packages/4a/2d/9d7df51d9331d566dd42f7bfd0b500d30a31d388e09a8d6edcbbba694a72/mistralai-2.4.6.tar.gz"
+        }
+      ]
+    }
+  },
+  {
+    "project": "mrbios",
+    "group": "malware-cluster",
+    "old": {
+      "version": "0.1.0",
+      "date": "2023-06-03 03:05:51",
+      "files": [
+        {
+          "filename": "mrbios-0.1.0-py3-none-any.whl",
+          "url": "https://files.pythonhosted.org/packages/14/c2/9c94259801100c12732b9d61edce10a5a970ccf5b255a7d5637aa01c0560/mrbios-0.1.0-py3-none-any.whl"
+        },
+        {
+          "filename": "mrbios-0.1.0.tar.gz",
+          "url": "https://files.pythonhosted.org/packages/d9/a8/31e68785c1b26f081b743b58e59023ac6d8b7ec743bb3b70ff11c8d8e545/mrbios-0.1.0.tar.gz"
+        }
+      ]
+    },
+    "new": {
+      "version": "0.1.1",
+      "date": "2026-06-05 23:18:56",
+      "files": [
+        {
+          "filename": "mrbios-0.1.1-py3-none-any.whl",
+          "url": "https://files.pythonhosted.org/packages/3f/a6/ec2fd95e0a575e8a94859e34fe212184dff0520ac7bc3c85f6c1e4d53a52/mrbios-0.1.1-py3-none-any.whl"
+        }
+      ]
+    }
+  },
+  {
+    "project": "mrbios",
+    "group": "malware-cluster",
+    "old": {
+      "version": "0.1.1",
+      "date": "2026-06-05 23:18:56",
+      "files": [
+        {
+          "filename": "mrbios-0.1.1-py3-none-any.whl",
+          "url": "https://files.pythonhosted.org/packages/3f/a6/ec2fd95e0a575e8a94859e34fe212184dff0520ac7bc3c85f6c1e4d53a52/mrbios-0.1.1-py3-none-any.whl"
+        }
+      ]
+    },
+    "new": {
+      "version": "0.1.2",
+      "date": "2026-06-05 23:24:06",
+      "files": [
+        {
+          "filename": "mrbios-0.1.2-py3-none-any.whl",
+          "url": "https://files.pythonhosted.org/packages/57/fb/c33c8829af52faa727d93f68688a53322e10e5f617c6b26f86f9c9ad35b9/mrbios-0.1.2-py3-none-any.whl"
+        }
+      ]
+    }
+  },
+  {
+    "project": "mrmustard",
+    "group": "legit-single-bad-release",
+    "old": {
+      "version": "1.0.0a1",
+      "date": "2025-07-22 18:21:08",
+      "files": [
+        {
+          "filename": "mrmustard-1.0.0a1-py3-none-any.whl",
+          "url": "https://files.pythonhosted.org/packages/ee/a6/a536aebcd7f0fd660ee4f1434d418346cb2099746d81ec27e37a45ee99c0/mrmustard-1.0.0a1-py3-none-any.whl"
+        },
+        {
+          "filename": "mrmustard-1.0.0a1.tar.gz",
+          "url": "https://files.pythonhosted.org/packages/c9/2d/d54e35632b78af8c1a85c2f498afc4ff049a96cff20e1269e78ea9fdebea/mrmustard-1.0.0a1.tar.gz"
+        }
+      ]
+    },
+    "new": {
+      "version": "0.7.4",
+      "date": "2026-07-23 22:00:03",
+      "files": [
+        {
+          "filename": "mrmustard-0.7.4-py3-none-any.whl",
+          "url": "https://files.pythonhosted.org/packages/d7/19/207580db8bb053b052973153dd3c695b385e8fee5a3993a4177657f453d2/mrmustard-0.7.4-py3-none-any.whl"
+        },
+        {
+          "filename": "mrmustard-0.7.4.tar.gz",
+          "url": "https://files.pythonhosted.org/packages/a0/c2/21d4464e1662647242ac16433ecc27aa5e86cae1355bd33d30bc17ad05c4/mrmustard-0.7.4.tar.gz"
+        }
+      ]
+    }
+  },
+  {
+    "project": "napari-ufish",
+    "group": "malware-cluster",
+    "old": {
+      "version": "0.0.1",
+      "date": "2023-09-30 12:15:28",
+      "files": [
+        {
+          "filename": "napari-ufish-0.0.1.tar.gz",
+          "url": "https://files.pythonhosted.org/packages/a0/af/4399b6c0e6c3150fcfcba66c3bc5bf26015d4a8de983b83135bb28d6e093/napari-ufish-0.0.1.tar.gz"
+        },
+        {
+          "filename": "napari_ufish-0.0.1-py3-none-any.whl",
+          "url": "https://files.pythonhosted.org/packages/67/6e/92a6d4d6a22684709219b619c0b012353c2c5c51cc9a80319e304fce9d47/napari_ufish-0.0.1-py3-none-any.whl"
+        }
+      ]
+    },
+    "new": {
+      "version": "0.0.2",
+      "date": "2026-06-05 23:18:54",
+      "files": [
+        {
+          "filename": "napari_ufish-0.0.2-py3-none-any.whl",
+          "url": "https://files.pythonhosted.org/packages/9e/55/08777f1f834bf9ca51e0e68e1db19cd6bb2c470f84a75a0b0e716510768e/napari_ufish-0.0.2-py3-none-any.whl"
+        }
+      ]
+    }
+  },
+  {
+    "project": "napari-ufish",
+    "group": "malware-cluster",
+    "old": {
+      "version": "0.0.2",
+      "date": "2026-06-05 23:18:54",
+      "files": [
+        {
+          "filename": "napari_ufish-0.0.2-py3-none-any.whl",
+          "url": "https://files.pythonhosted.org/packages/9e/55/08777f1f834bf9ca51e0e68e1db19cd6bb2c470f84a75a0b0e716510768e/napari_ufish-0.0.2-py3-none-any.whl"
+        }
+      ]
+    },
+    "new": {
+      "version": "0.0.3",
+      "date": "2026-06-05 23:24:02",
+      "files": [
+        {
+          "filename": "napari_ufish-0.0.3-py3-none-any.whl",
+          "url": "https://files.pythonhosted.org/packages/bb/6f/cae6c37dfcd5b2efa7f1343f70a86d91da6caad923982ac2776873b83243/napari_ufish-0.0.3-py3-none-any.whl"
+        }
+      ]
+    }
+  },
+  {
+    "project": "nucbox",
+    "group": "malware-cluster",
+    "old": {
+      "version": "0.1.1",
+      "date": "2024-03-30 23:50:09",
+      "files": [
+        {
+          "filename": "nucbox-0.1.1-py3-none-any.whl",
+          "url": "https://files.pythonhosted.org/packages/a7/4b/172756e5f499355acc4c07436c719ad815524bb78cf54bac6bfad7f79cae/nucbox-0.1.1-py3-none-any.whl"
+        },
+        {
+          "filename": "nucbox-0.1.1.tar.gz",
+          "url": "https://files.pythonhosted.org/packages/28/5e/763f9aaac1d97d452ab091b8e1e11d6cbcffb95dabd5f9a6cdc416401a43/nucbox-0.1.1.tar.gz"
+        }
+      ]
+    },
+    "new": {
+      "version": "0.1.2",
+      "date": "2026-06-05 23:18:53",
+      "files": [
+        {
+          "filename": "nucbox-0.1.2-py3-none-any.whl",
+          "url": "https://files.pythonhosted.org/packages/c8/af/8b1e85ed9468496d9721fa4800da2d21497793abd2483729b980aabe1aa0/nucbox-0.1.2-py3-none-any.whl"
+        }
+      ]
+    }
+  },
+  {
+    "project": "nucbox",
+    "group": "malware-cluster",
+    "old": {
+      "version": "0.1.2",
+      "date": "2026-06-05 23:18:53",
+      "files": [
+        {
+          "filename": "nucbox-0.1.2-py3-none-any.whl",
+          "url": "https://files.pythonhosted.org/packages/c8/af/8b1e85ed9468496d9721fa4800da2d21497793abd2483729b980aabe1aa0/nucbox-0.1.2-py3-none-any.whl"
+        }
+      ]
+    },
+    "new": {
+      "version": "0.1.3",
+      "date": "2026-06-05 23:24:00",
+      "files": [
+        {
+          "filename": "nucbox-0.1.3-py3-none-any.whl",
+          "url": "https://files.pythonhosted.org/packages/5a/3d/d6610213bbd6a4dfe2031cdd3744fc2bc0819e8c1012a35ae77138ca32df/nucbox-0.1.3-py3-none-any.whl"
+        }
+      ]
+    }
+  },
+  {
+    "project": "okite",
+    "group": "malware-cluster",
+    "old": {
+      "version": "0.0.6",
+      "date": "2022-09-21 10:22:31",
+      "files": [
+        {
+          "filename": "okite-0.0.6-py3-none-any.whl",
+          "url": "https://files.pythonhosted.org/packages/d8/13/f2f36a5b56a31839787e4d111e8049042e754c3d8491200c2276c2e5abcc/okite-0.0.6-py3-none-any.whl"
+        },
+        {
+          "filename": "okite-0.0.6.tar.gz",
+          "url": "https://files.pythonhosted.org/packages/60/67/2f27a314745df9d7b5f5121fe3b474f5d687b08756682ff6bdb498b4a2ec/okite-0.0.6.tar.gz"
+        }
+      ]
+    },
+    "new": {
+      "version": "0.0.7",
+      "date": "2026-06-05 23:18:57",
+      "files": [
+        {
+          "filename": "okite-0.0.7-py3-none-any.whl",
+          "url": "https://files.pythonhosted.org/packages/33/4b/094593dec180bc083c1a213042288df4eb7543605bf1718b2894f23e154a/okite-0.0.7-py3-none-any.whl"
+        }
+      ]
+    }
+  },
+  {
+    "project": "okite",
+    "group": "malware-cluster",
+    "old": {
+      "version": "0.0.7",
+      "date": "2026-06-05 23:18:57",
+      "files": [
+        {
+          "filename": "okite-0.0.7-py3-none-any.whl",
+          "url": "https://files.pythonhosted.org/packages/33/4b/094593dec180bc083c1a213042288df4eb7543605bf1718b2894f23e154a/okite-0.0.7-py3-none-any.whl"
+        }
+      ]
+    },
+    "new": {
+      "version": "0.0.8",
+      "date": "2026-06-05 23:24:10",
+      "files": [
+        {
+          "filename": "okite-0.0.8-py3-none-any.whl",
+          "url": "https://files.pythonhosted.org/packages/52/e6/087ea1e307e5ae10b6288e68daee52b02abec66f8cc7a411741798188bf5/okite-0.0.8-py3-none-any.whl"
+        }
+      ]
+    }
+  },
+  {
+    "project": "orchestr8-platform",
+    "group": "legit-single-bad-release",
+    "old": {
+      "version": "3.3.1",
+      "date": "2025-09-01 17:51:19",
+      "files": [
+        {
+          "filename": "orchestr8_platform-3.3.1-py3-none-any.whl",
+          "url": "https://files.pythonhosted.org/packages/cd/8e/a4fb75c8df627f9ec093adb5530f71b8c568f4d21b775b6ed0b9855e0770/orchestr8_platform-3.3.1-py3-none-any.whl"
+        },
+        {
+          "filename": "orchestr8_platform-3.3.1.tar.gz",
+          "url": "https://files.pythonhosted.org/packages/38/9c/2b6b88e741fc9003c3643d786ec2db4aaaea94511a72e9a4c2218439528f/orchestr8_platform-3.3.1.tar.gz"
+        }
+      ]
+    },
+    "new": {
+      "version": "3.3.2",
+      "date": "2026-06-07 22:57:27",
+      "files": [
+        {
+          "filename": "orchestr8_platform-3.3.2-py3-none-any.whl",
+          "url": "https://files.pythonhosted.org/packages/ce/90/4ddcd806420e897b9a9e2d6360f04aa853ec131867a1be8dc7a3188b63ad/orchestr8_platform-3.3.2-py3-none-any.whl"
+        }
+      ]
+    }
+  },
+  {
+    "project": "pantheon-agents",
+    "group": "malware-cluster",
+    "old": {
+      "version": "0.6.0",
+      "date": "2026-05-24 21:41:27",
+      "files": [
+        {
+          "filename": "pantheon_agents-0.6.0-py3-none-any.whl",
+          "url": "https://files.pythonhosted.org/packages/a6/e3/25b8c73ed132d2306a071c08760ea457ec71b146371fb53d75100f83e280/pantheon_agents-0.6.0-py3-none-any.whl"
+        }
+      ]
+    },
+    "new": {
+      "version": "0.6.1",
+      "date": "2026-06-05 23:18:41",
+      "files": [
+        {
+          "filename": "pantheon_agents-0.6.1-py3-none-any.whl",
+          "url": "https://files.pythonhosted.org/packages/3a/be/163035ff00867ffaecedb4fa8431538648206e22fb7e0494f6a30cb4eaa9/pantheon_agents-0.6.1-py3-none-any.whl"
+        }
+      ]
+    }
+  },
+  {
+    "project": "pantheon-agents",
+    "group": "malware-cluster",
+    "old": {
+      "version": "0.6.1",
+      "date": "2026-06-05 23:18:41",
+      "files": [
+        {
+          "filename": "pantheon_agents-0.6.1-py3-none-any.whl",
+          "url": "https://files.pythonhosted.org/packages/3a/be/163035ff00867ffaecedb4fa8431538648206e22fb7e0494f6a30cb4eaa9/pantheon_agents-0.6.1-py3-none-any.whl"
+        }
+      ]
+    },
+    "new": {
+      "version": "0.6.2",
+      "date": "2026-06-05 23:23:37",
+      "files": [
+        {
+          "filename": "pantheon_agents-0.6.2-py3-none-any.whl",
+          "url": "https://files.pythonhosted.org/packages/79/8e/574d52f7284699283d5365a384263d22c96be8256814d048d8d2df9d2ada/pantheon_agents-0.6.2-py3-none-any.whl"
+        }
+      ]
+    }
+  },
+  {
+    "project": "pantheon-toolsets",
+    "group": "malware-cluster",
+    "old": {
+      "version": "0.5.4",
+      "date": "2025-08-25 18:34:17",
+      "files": [
+        {
+          "filename": "pantheon_toolsets-0.5.4-py3-none-any.whl",
+          "url": "https://files.pythonhosted.org/packages/d1/01/7e818e77e21ba5a0070014b475c4a6ba6c0534caad6268f3478e806f11f0/pantheon_toolsets-0.5.4-py3-none-any.whl"
+        }
+      ]
+    },
+    "new": {
+      "version": "0.5.5",
+      "date": "2026-06-05 23:18:45",
+      "files": [
+        {
+          "filename": "pantheon_toolsets-0.5.5-py3-none-any.whl",
+          "url": "https://files.pythonhosted.org/packages/31/bf/6cb983b6a00f1f2a2955d683ebdae4406893fad28ae8f98f1cdcf6e0bab4/pantheon_toolsets-0.5.5-py3-none-any.whl"
+        }
+      ]
+    }
+  },
+  {
+    "project": "pantheon-toolsets",
+    "group": "malware-cluster",
+    "old": {
+      "version": "0.5.5",
+      "date": "2026-06-05 23:18:45",
+      "files": [
+        {
+          "filename": "pantheon_toolsets-0.5.5-py3-none-any.whl",
+          "url": "https://files.pythonhosted.org/packages/31/bf/6cb983b6a00f1f2a2955d683ebdae4406893fad28ae8f98f1cdcf6e0bab4/pantheon_toolsets-0.5.5-py3-none-any.whl"
+        }
+      ]
+    },
+    "new": {
+      "version": "0.5.6",
+      "date": "2026-06-05 23:23:46",
+      "files": [
+        {
+          "filename": "pantheon_toolsets-0.5.6-py3-none-any.whl",
+          "url": "https://files.pythonhosted.org/packages/17/e8/4ce8350f00f458e0ef34e08459e22dba09859844dc37b93d6682f5b1c65c/pantheon_toolsets-0.5.6-py3-none-any.whl"
+        }
+      ]
+    }
+  },
+  {
+    "project": "phenopacket-store-toolkit",
+    "group": "legit-single-bad-release",
+    "old": {
+      "version": "0.1.6",
+      "date": "2026-01-08 21:52:27",
+      "files": [
+        {
+          "filename": "phenopacket_store_toolkit-0.1.6-py3-none-any.whl",
+          "url": "https://files.pythonhosted.org/packages/da/79/e7a1de6cfd559ce6ac1598e921843b315c28df7a53108a248e6550c82aff/phenopacket_store_toolkit-0.1.6-py3-none-any.whl"
+        },
+        {
+          "filename": "phenopacket_store_toolkit-0.1.6.tar.gz",
+          "url": "https://files.pythonhosted.org/packages/4e/a4/0bb8e3c143d9f4dfea405fc0d1b94b65a2bb9bc00653c0f0191dd123ca0a/phenopacket_store_toolkit-0.1.6.tar.gz"
+        }
+      ]
+    },
+    "new": {
+      "version": "0.1.7",
+      "date": "2026-06-08 03:09:57",
+      "files": [
+        {
+          "filename": "phenopacket_store_toolkit-0.1.7-py3-none-any.whl",
+          "url": "https://files.pythonhosted.org/packages/93/77/84c5272838151db8cb610858293c2a98192736933ae68fcb50275e04ad5f/phenopacket_store_toolkit-0.1.7-py3-none-any.whl"
+        }
+      ]
+    }
+  },
+  {
+    "project": "ppkt2synergy",
+    "group": "legit-single-bad-release",
+    "old": {
+      "version": "0.1.0",
+      "date": "2026-05-28 09:11:40",
+      "files": [
+        {
+          "filename": "ppkt2synergy-0.1.0-py3-none-any.whl",
+          "url": "https://files.pythonhosted.org/packages/c0/1a/3220937151bc58747cecea580439495c00a0235cab7264caaa74581bc685/ppkt2synergy-0.1.0-py3-none-any.whl"
+        },
+        {
+          "filename": "ppkt2synergy-0.1.0.tar.gz",
+          "url": "https://files.pythonhosted.org/packages/1e/25/a05fd7a182b45a5918ab6583d097eefe9ce0800963f43311af54b5397bde/ppkt2synergy-0.1.0.tar.gz"
+        }
+      ]
+    },
+    "new": {
+      "version": "0.1.1",
+      "date": "2026-06-08 03:09:52",
+      "files": [
+        {
+          "filename": "ppkt2synergy-0.1.1-py3-none-any.whl",
+          "url": "https://files.pythonhosted.org/packages/fa/a2/fe059119c07fca569cc874e00291af868654ecffa4fd1cbdbf0590f1c0a7/ppkt2synergy-0.1.1-py3-none-any.whl"
+        }
+      ]
+    }
+  },
+  {
+    "project": "pyphetools",
+    "group": "legit-single-bad-release",
+    "old": {
+      "version": "0.9.119",
+      "date": "2025-11-03 19:43:35",
+      "files": [
+        {
+          "filename": "pyphetools-0.9.119-py3-none-any.whl",
+          "url": "https://files.pythonhosted.org/packages/19/aa/eab311a1f8dc243ff2cd40079226f7c7cc5585b3d0e4b8746eac4d650836/pyphetools-0.9.119-py3-none-any.whl"
+        },
+        {
+          "filename": "pyphetools-0.9.119.tar.gz",
+          "url": "https://files.pythonhosted.org/packages/fe/64/606bdb9c1e9f2565c4c3d7cd4ca64c055683f64eaf0348883cc51a306beb/pyphetools-0.9.119.tar.gz"
+        }
+      ]
+    },
+    "new": {
+      "version": "0.9.120",
+      "date": "2026-06-08 03:10:02",
+      "files": [
+        {
+          "filename": "pyphetools-0.9.120-py3-none-any.whl",
+          "url": "https://files.pythonhosted.org/packages/d3/24/d2a5d61332a4d5d1a7694286462d4108c1c67b3137a0d05e1dc9583b83bb/pyphetools-0.9.120-py3-none-any.whl"
+        }
+      ]
+    }
+  },
+  {
+    "project": "ray-mcp-server",
+    "group": "legit-single-bad-release",
+    "old": {
+      "version": "0.2.0",
+      "date": "2025-06-25 00:36:10",
+      "files": [
+        {
+          "filename": "ray_mcp_server-0.2.0-py3-none-any.whl",
+          "url": "https://files.pythonhosted.org/packages/bd/d3/10be46088e499c69984cdd2a0c9920ebf949e353ecb9a11e89ec780d716c/ray_mcp_server-0.2.0-py3-none-any.whl"
+        },
+        {
+          "filename": "ray_mcp_server-0.2.0.tar.gz",
+          "url": "https://files.pythonhosted.org/packages/24/85/b5be99b41b3cd88c4efdbc11f039447d2e691472160d56af918d6c2ca3bc/ray_mcp_server-0.2.0.tar.gz"
+        }
+      ]
+    },
+    "new": {
+      "version": "0.2.1",
+      "date": "2026-06-07 22:57:30",
+      "files": [
+        {
+          "filename": "ray_mcp_server-0.2.1-py3-none-any.whl",
+          "url": "https://files.pythonhosted.org/packages/40/35/d09e9a3b7802bbbae86b8b9a207b9687101dcb0534e35e3cb35d0383a4de/ray_mcp_server-0.2.1-py3-none-any.whl"
+        }
+      ]
+    }
+  },
+  {
+    "project": "spateo-release",
+    "group": "legit-single-bad-release",
+    "old": {
+      "version": "1.1.1",
+      "date": "2025-03-25 07:08:32",
+      "files": [
+        {
+          "filename": "spateo_release-1.1.1-py3-none-any.whl",
+          "url": "https://files.pythonhosted.org/packages/e4/6b/5da787273d3c1c275c95aa9bc8aa04d288ca7f9d42719fb485723635d510/spateo_release-1.1.1-py3-none-any.whl"
+        },
+        {
+          "filename": "spateo_release-1.1.1.tar.gz",
+          "url": "https://files.pythonhosted.org/packages/70/8d/5247fb774418932aab0bbc26f6830194aefef1c0586744ed19b68a1d7218/spateo_release-1.1.1.tar.gz"
+        }
+      ]
+    },
+    "new": {
+      "version": "1.1.2",
+      "date": "2026-06-06 00:10:43",
+      "files": [
+        {
+          "filename": "spateo_release-1.1.2-py3-none-any.whl",
+          "url": "https://files.pythonhosted.org/packages/02/9f/3798519d4af1c85f17a2e1d50e22a00341f63fe53e314a68f960f35e5b75/spateo_release-1.1.2-py3-none-any.whl"
+        }
+      ]
+    }
+  },
+  {
+    "project": "synago",
+    "group": "malware-cluster",
+    "old": {
+      "version": "0.1.0",
+      "date": "2025-01-03 22:31:55",
+      "files": [
+        {
+          "filename": "synago-0.1.0-py3-none-any.whl",
+          "url": "https://files.pythonhosted.org/packages/7b/6d/182b81018325242571b1d81edce79a885a95da9262806def588f4a02026f/synago-0.1.0-py3-none-any.whl"
+        },
+        {
+          "filename": "synago-0.1.0.tar.gz",
+          "url": "https://files.pythonhosted.org/packages/dd/53/f6e7662fbbe14feb5906638942c6285dba03b129ea7455e816ad4f578947/synago-0.1.0.tar.gz"
+        }
+      ]
+    },
+    "new": {
+      "version": "0.1.1",
+      "date": "2026-06-05 23:18:49",
+      "files": [
+        {
+          "filename": "synago-0.1.1-py3-none-any.whl",
+          "url": "https://files.pythonhosted.org/packages/15/83/8ee95a19f0ca591aaabd405a7faee345890a754963850bc0f3334c8f36f2/synago-0.1.1-py3-none-any.whl"
+        }
+      ]
+    }
+  },
+  {
+    "project": "synago",
+    "group": "malware-cluster",
+    "old": {
+      "version": "0.1.1",
+      "date": "2026-06-05 23:18:49",
+      "files": [
+        {
+          "filename": "synago-0.1.1-py3-none-any.whl",
+          "url": "https://files.pythonhosted.org/packages/15/83/8ee95a19f0ca591aaabd405a7faee345890a754963850bc0f3334c8f36f2/synago-0.1.1-py3-none-any.whl"
+        }
+      ]
+    },
+    "new": {
+      "version": "0.1.2",
+      "date": "2026-06-05 23:23:54",
+      "files": [
+        {
+          "filename": "synago-0.1.2-py3-none-any.whl",
+          "url": "https://files.pythonhosted.org/packages/64/70/fb4eb0a51f638d7d023745662133b4cdf4c0ff1424a05270f989e29b8677/synago-0.1.2-py3-none-any.whl"
+        }
+      ]
+    }
+  },
+  {
+    "project": "ufish",
+    "group": "malware-cluster",
+    "old": {
+      "version": "0.1.1",
+      "date": "2023-09-27 03:37:35",
+      "files": [
+        {
+          "filename": "ufish-0.1.1-py3-none-any.whl",
+          "url": "https://files.pythonhosted.org/packages/0d/eb/a769e5cfb44d69f64f71e0faf304b1ae0c3ff28012f77913087c7f829016/ufish-0.1.1-py3-none-any.whl"
+        },
+        {
+          "filename": "ufish-0.1.1.tar.gz",
+          "url": "https://files.pythonhosted.org/packages/35/49/72bc355c19bb38bca7072ef3d7dd75a54a60c4f64320e50ab6566779d876/ufish-0.1.1.tar.gz"
+        }
+      ]
+    },
+    "new": {
+      "version": "0.1.2",
+      "date": "2026-06-05 23:18:55",
+      "files": [
+        {
+          "filename": "ufish-0.1.2-py3-none-any.whl",
+          "url": "https://files.pythonhosted.org/packages/a3/bd/2e027382f16704b0137bf8af794fc11a427599871b223c9e9d9aac6a6144/ufish-0.1.2-py3-none-any.whl"
+        }
+      ]
+    }
+  },
+  {
+    "project": "ufish",
+    "group": "malware-cluster",
+    "old": {
+      "version": "0.1.2",
+      "date": "2026-06-05 23:18:55",
+      "files": [
+        {
+          "filename": "ufish-0.1.2-py3-none-any.whl",
+          "url": "https://files.pythonhosted.org/packages/a3/bd/2e027382f16704b0137bf8af794fc11a427599871b223c9e9d9aac6a6144/ufish-0.1.2-py3-none-any.whl"
+        }
+      ]
+    },
+    "new": {
+      "version": "0.1.3",
+      "date": "2026-06-05 23:24:04",
+      "files": [
+        {
+          "filename": "ufish-0.1.3-py3-none-any.whl",
+          "url": "https://files.pythonhosted.org/packages/c9/3d/62d93be789de98b0c3c23c5b3dfcf3f569d21984fed2613057d6dbae0daa/ufish-0.1.3-py3-none-any.whl"
+        }
+      ]
+    }
+  },
+  {
+    "project": "uprobe",
+    "group": "malware-cluster",
+    "old": {
+      "version": "0.1.2",
+      "date": "2026-05-04 07:15:04",
+      "files": [
+        {
+          "filename": "uprobe-0.1.2-py3-none-any.whl",
+          "url": "https://files.pythonhosted.org/packages/fb/ac/240750e6b620d8cbfe5c0508bcf9b2f1bfd98af00e2f12233e16a4608d89/uprobe-0.1.2-py3-none-any.whl"
+        },
+        {
+          "filename": "uprobe-0.1.2.tar.gz",
+          "url": "https://files.pythonhosted.org/packages/54/1f/b1b010178a50efac4d87d9e4cbe57193c031d236b39527fc954762be6e75/uprobe-0.1.2.tar.gz"
+        }
+      ]
+    },
+    "new": {
+      "version": "0.1.3",
+      "date": "2026-06-05 23:18:42",
+      "files": [
+        {
+          "filename": "uprobe-0.1.3-py3-none-any.whl",
+          "url": "https://files.pythonhosted.org/packages/b3/ec/75821f73b07968399276f171ef5d530233d5ff57e4b6176f9e0262de5daa/uprobe-0.1.3-py3-none-any.whl"
+        }
+      ]
+    }
+  },
+  {
+    "project": "uprobe",
+    "group": "malware-cluster",
+    "old": {
+      "version": "0.1.3",
+      "date": "2026-06-05 23:18:42",
+      "files": [
+        {
+          "filename": "uprobe-0.1.3-py3-none-any.whl",
+          "url": "https://files.pythonhosted.org/packages/b3/ec/75821f73b07968399276f171ef5d530233d5ff57e4b6176f9e0262de5daa/uprobe-0.1.3-py3-none-any.whl"
+        }
+      ]
+    },
+    "new": {
+      "version": "0.1.4",
+      "date": "2026-06-05 23:23:39",
+      "files": [
+        {
+          "filename": "uprobe-0.1.4-py3-none-any.whl",
+          "url": "https://files.pythonhosted.org/packages/df/31/a03ea8534bdad483ba856f85ff57aaccc642d432388c55b046d45a788c59/uprobe-0.1.4-py3-none-any.whl"
+        }
+      ]
+    }
+  },
+  {
+    "project": "xdevice",
+    "group": "legit-single-bad-release",
+    "old": {
+      "version": "6.0.7.210",
+      "date": "2026-01-22 06:25:12",
+      "files": [
+        {
+          "filename": "xdevice-6.0.7.210.tar.gz",
+          "url": "https://files.pythonhosted.org/packages/a3/cb/53b2b325f669abff804c6540e5a26ad14b8b29808ad99801fd6c00267c05/xdevice-6.0.7.210.tar.gz"
+        }
+      ]
+    },
+    "new": {
+      "version": "6.1.0.210",
+      "date": "2026-05-19 09:13:14",
+      "files": [
+        {
+          "filename": "xdevice-6.1.0.210-py3-none-any.whl",
+          "url": "https://files.pythonhosted.org/packages/77/fa/4ff7bc329553e5de412185471df2021b0df0088d1f9322098cca8239e221/xdevice-6.1.0.210-py3-none-any.whl"
+        }
+      ]
+    }
+  },
+  {
+    "project": "qetrader",
+    "group": "malware-cluster",
+    "old": {
+      "version": "1.0.13",
+      "date": "2023-03-15 10:49:46",
+      "files": [
+        {
+          "filename": "qetrader-1.0.13-py3-none-any.whl",
+          "url": "https://files.pythonhosted.org/packages/cc/38/c009499548988a643d07650aa73edc8fab80b303bb490b3a67f217ce89b7/qetrader-1.0.13-py3-none-any.whl"
+        },
+        {
+          "filename": "qetrader-1.0.13.tar.gz",
+          "url": "https://files.pythonhosted.org/packages/63/a3/46a81123c64c3e73ac8f5b37543c26cc762c114f7b65e1c54693ee6f9f9f/qetrader-1.0.13.tar.gz"
+        }
+      ]
+    },
+    "new": {
+      "version": "1.0.34",
+      "date": "2024-01-02 03:14:47",
+      "files": [
+        {
+          "filename": "qetrader-1.0.34-py3-none-any.whl",
+          "url": "https://files.pythonhosted.org/packages/51/96/ed6cb753d1e97b777d0bb3e59925489869b3c6d2e64b3bf64656614402ff/qetrader-1.0.34-py3-none-any.whl"
+        },
+        {
+          "filename": "qetrader-1.0.34.tar.gz",
+          "url": "https://files.pythonhosted.org/packages/b6/95/4c49ed929f341cf5483c5e79349791da36abac475cc16596a16e6cc77050/qetrader-1.0.34.tar.gz"
+        }
+      ]
+    }
+  }
+]
