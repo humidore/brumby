@@ -101,6 +101,28 @@ def _normalize_js_leaf(leaf: str) -> str:
     return leaf
 
 
+_QUOTED_STRING_PAT = re.compile(rb"""(['"])((?:\\.|(?!\1)[^\\\n])*)\1""")
+_MIN_CHARSET_STRING_LEN = 8
+
+
+def _line_has_charset_string_literal(line: bytes) -> bool:
+    """True if the line contains a quoted string with no repeated characters --
+    e.g. a base58 alphabet ("123456789ABCDEFGHJKLM...") or a url-safe-token
+    charset ("abc...xyzABC...XYZ0...9-_"). A charset definition is a set: by
+    construction it uses each symbol once. High per-character entropy is the
+    whole point of one; it isn't a sign of encoded/obfuscated data. Real
+    encoded/random data of any meaningful length will almost certainly repeat
+    a character (birthday paradox), so this doesn't require any particular
+    ordering the way a plain sortedness check would -- it still catches an
+    unsorted charset like epok-auth's lowercase-then-uppercase-then-digit
+    token alphabet.
+    """
+    for _quote, body in _QUOTED_STRING_PAT.findall(line):
+        if len(body) >= _MIN_CHARSET_STRING_LEN and len(set(body)) == len(body):
+            return True
+    return False
+
+
 @register(
     "imports_base64",
     "A .py file imports base64 (common in obfuscated payloads)",
@@ -175,6 +197,8 @@ def find_high_entropy_source(view: ArtifactView, cfg: dict) -> list[Finding]:
     for name, content in view.iter_files(exts=_PY):
         for line in content.split(b"\n"):
             if len(line) > max_line_length:
+                continue
+            if _line_has_charset_string_literal(line):
                 continue
             entropy = _shannon_entropy(line)
             if entropy > threshold:
