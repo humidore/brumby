@@ -240,6 +240,25 @@ class ArtifactView:
                         if fobj:
                             yield member.name, fobj.read()
 
+    def relative_name(self, name: str) -> str:
+        """Member path with a version-tagged wrapper directory stripped: an
+        sdist's top-level "<project>-<version>/", or a wheel's
+        "<project>-<version>.data/" (scripts/data/headers/purelib/platlib)
+        directory. Otherwise the same file -- e.g. a bundled console-script
+        binary at "<pkg>-<version>.data/scripts/<name>" -- always looks new
+        across versions purely because the wrapper dir's embedded version
+        changed. A wheel's ordinary package-root paths have no such wrapper
+        and pass through unchanged.
+        """
+        if "/" not in name:
+            return name
+        first, rest = name.split("/", 1)
+        if self.filetype == "sdist":
+            return rest
+        if self.filetype == "wheel" and first.endswith(".data"):
+            return rest
+        return name
+
 
 def make_artifact(file_info: dict) -> Artifact:
     packagetype = file_info.get("packagetype", "")

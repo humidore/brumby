@@ -24,13 +24,18 @@ class _DummyView:
     def iter_files(self, exts=None):
         yield from self._files
 
+    def relative_name(self, name: str) -> str:
+        if self.filetype == "sdist" and "/" in name:
+            return name.split("/", 1)[1]
+        return name
+
 
 def test_long_source_line_uses_filename_value() -> None:
     view = _DummyView([("pkg/module.py", b"ok\n" + b"x" * 12)])
 
     findings = find_long_source_line(view, {"threshold": 10})
 
-    assert findings == [Finding("long_source_line", "module.py", "pkg-1.0.whl", "wheel")]
+    assert findings == [Finding("long_source_line", "pkg/module.py", "pkg-1.0.whl", "wheel")]
 
 
 def test_long_source_line_respects_threshold() -> None:
@@ -48,8 +53,8 @@ def test_long_source_line_reports_multiple_files() -> None:
     )
 
     assert find_long_source_line(view, {"threshold": 10}) == [
-        Finding("long_source_line", "constants.py", "pkg-1.0.whl", "wheel"),
-        Finding("long_source_line", "proxy_server.py", "pkg-1.0.whl", "wheel"),
+        Finding("long_source_line", "litellm/constants.py", "pkg-1.0.whl", "wheel"),
+        Finding("long_source_line", "litellm/proxy/proxy_server.py", "pkg-1.0.whl", "wheel"),
     ]
 
 
@@ -59,7 +64,7 @@ def test_high_entropy_source_uses_lines_not_sliding_windows() -> None:
 
     findings = find_high_entropy_source(view, {"threshold": 5.5, "max_line_length": 8192})
 
-    assert findings == [Finding("high_entropy_source", "proxy.py", "pkg-1.0.whl", "wheel")]
+    assert findings == [Finding("high_entropy_source", "pkg/proxy.py", "pkg-1.0.whl", "wheel")]
 
 
 def test_high_entropy_source_skips_overly_long_lines() -> None:
@@ -74,7 +79,7 @@ def test_high_entropy_blob_reports_overly_long_lines() -> None:
     view = _DummyView([("pkg/proxy.py", base64ish * 200 + b"\n")])
 
     assert find_high_entropy_blob(view, {"max_line_length": 8192}) == [
-        Finding("high_entropy_blob", "proxy.py", "pkg-1.0.whl", "wheel")
+        Finding("high_entropy_blob", "pkg/proxy.py", "pkg-1.0.whl", "wheel")
     ]
 
 
@@ -89,8 +94,8 @@ def test_imports_base64_reports_every_matching_file() -> None:
     )
 
     assert find_imports_base64(view, {}) == [
-        Finding("imports_base64", "a.py", "pkg-1.0.whl", "wheel"),
-        Finding("imports_base64", "b.py", "pkg-1.0.whl", "wheel"),
+        Finding("imports_base64", "pkg/a.py", "pkg-1.0.whl", "wheel"),
+        Finding("imports_base64", "pkg/b.py", "pkg-1.0.whl", "wheel"),
     ]
 
 
@@ -102,7 +107,7 @@ def test_high_entropy_source_is_enabled_by_default() -> None:
 
         findings = analyze_artifacts([make_local_artifact(path)], {}, content=True)
 
-        assert any(f.name == "high_entropy_source" and f.value == "proxy.py" for f in findings)
+        assert any(f.name == "high_entropy_source" and f.value == "demo/proxy.py" for f in findings)
 
 
 def test_high_entropy_blob_is_enabled_by_default() -> None:
@@ -113,4 +118,4 @@ def test_high_entropy_blob_is_enabled_by_default() -> None:
 
         findings = analyze_artifacts([make_local_artifact(path)], {}, content=True)
 
-        assert any(f.name == "high_entropy_blob" and f.value == "proxy.py" for f in findings)
+        assert any(f.name == "high_entropy_blob" and f.value == "demo/proxy.py" for f in findings)

@@ -18,35 +18,46 @@ class _DummyView:
                     continue
             yield name, header[:n]
 
+    def relative_name(self, name: str) -> str:
+        if self.filetype == "sdist" and "/" in name:
+            return name.split("/", 1)[1]
+        return name
+
 
 def test_binary_types_detects_scr_extension() -> None:
     view = _DummyView([("pkg/tool.scr", b"MZ....")])
 
-    assert find_binary_types(view, {}) == [Finding("has_pe_binary", "tool.scr", "pkg-1.0.whl", "wheel")]
+    assert find_binary_types(view, {}) == [Finding("has_pe_binary", "pkg/tool.scr", "pkg-1.0.whl", "wheel")]
 
 
 def test_binary_types_detects_extensionless_elf() -> None:
     view = _DummyView([("pkg/bin/tool", b"\x7fELF....")])
 
-    assert find_binary_types(view, {}) == [Finding("has_elf_binary", "tool", "pkg-1.0.whl", "wheel")]
+    assert find_binary_types(view, {}) == [Finding("has_elf_binary", "pkg/bin/tool", "pkg-1.0.whl", "wheel")]
 
 
 def test_binary_types_detects_uppercase_exe_extension() -> None:
     view = _DummyView([("pkg/APP.EXE", b"MZ....")])
 
-    assert find_binary_types(view, {}) == [Finding("has_pe_binary", "APP.EXE", "pkg-1.0.whl", "wheel")]
+    assert find_binary_types(view, {}) == [Finding("has_pe_binary", "pkg/APP.EXE", "pkg-1.0.whl", "wheel")]
 
 
 def test_binary_types_detects_versioned_shared_library() -> None:
     view = _DummyView([("pkg/lib/libcmake.so.3", b"\x7fELF....")])
 
-    assert find_binary_types(view, {}) == [Finding("has_elf_binary", "libcmake.so.3", "pkg-1.0.whl", "wheel")]
+    assert find_binary_types(view, {}) == [Finding("has_elf_binary", "pkg/lib/libcmake.so.3", "pkg-1.0.whl", "wheel")]
+
+
+def test_binary_types_normalizes_cpython_abi_tag() -> None:
+    view = _DummyView([("pkg/_native.cpython-311-darwin.so", b"\x7fELF....")])
+
+    assert find_binary_types(view, {}) == [Finding("has_elf_binary", "pkg/_native.so", "pkg-1.0.whl", "wheel")]
 
 
 def test_binary_types_detects_aout_binary() -> None:
     view = _DummyView([("pkg/bin/legacy", b"\x07\x01....")])
 
-    assert find_binary_types(view, {}) == [Finding("has_aout_binary", "legacy", "pkg-1.0.whl", "wheel")]
+    assert find_binary_types(view, {}) == [Finding("has_aout_binary", "pkg/bin/legacy", "pkg-1.0.whl", "wheel")]
 
 
 def test_binary_types_detects_efi_binary() -> None:
@@ -59,15 +70,15 @@ def test_binary_types_detects_efi_binary() -> None:
     view = _DummyView([("pkg/boot/BOOTX64.EFI", bytes(dos))])
 
     assert find_binary_types(view, {}) == [
-        Finding("has_pe_binary", "BOOTX64.EFI", "pkg-1.0.whl", "wheel"),
-        Finding("has_efi_binary", "BOOTX64.EFI", "pkg-1.0.whl", "wheel"),
+        Finding("has_pe_binary", "pkg/boot/BOOTX64.EFI", "pkg-1.0.whl", "wheel"),
+        Finding("has_efi_binary", "pkg/boot/BOOTX64.EFI", "pkg-1.0.whl", "wheel"),
     ]
 
 
 def test_binary_types_detects_com_binary_by_extension() -> None:
     view = _DummyView([("pkg/bin/driver.com", b"\x01\x02\x03\x04")])
 
-    assert find_binary_types(view, {}) == [Finding("has_com_binary", "driver.com", "pkg-1.0.whl", "wheel")]
+    assert find_binary_types(view, {}) == [Finding("has_com_binary", "pkg/bin/driver.com", "pkg-1.0.whl", "wheel")]
 
 
 def test_binary_types_uses_member_name_for_sdist_values() -> None:
@@ -76,7 +87,9 @@ def test_binary_types_uses_member_name_for_sdist_values() -> None:
     view.resource = "sdist-format=tar.gz"
     view.filename = "uv-0.11.10.tar.gz"
 
-    assert find_binary_types(view, {}) == [Finding("has_elf_binary", "uv", "uv-0.11.10.tar.gz", "sdist-format=tar.gz")]
+    assert find_binary_types(view, {}) == [
+        Finding("has_elf_binary", "scripts/uv", "uv-0.11.10.tar.gz", "sdist-format=tar.gz")
+    ]
 
 
 def test_binary_types_strips_sdist_directory_from_value() -> None:
@@ -85,7 +98,9 @@ def test_binary_types_strips_sdist_directory_from_value() -> None:
     view.resource = "sdist-format=tar.gz"
     view.filename = "uv-0.11.10.tar.gz"
 
-    assert find_binary_types(view, {}) == [Finding("has_pe_binary", "uv.exe", "uv-0.11.10.tar.gz", "sdist-format=tar.gz")]
+    assert find_binary_types(view, {}) == [
+        Finding("has_pe_binary", "scripts/uv.exe", "uv-0.11.10.tar.gz", "sdist-format=tar.gz")
+    ]
 
 
 def test_py_file_not_python_flags_non_python_shebang() -> None:
@@ -94,7 +109,7 @@ def test_py_file_not_python_flags_non_python_shebang() -> None:
     view = _DummyView([("pkg/tool.py", b"#!/bin/sh\necho hi\n")])
 
     assert find_py_file_not_python(view, {}) == [
-        Finding("py_file_not_python", "tool.py", "pkg-1.0.whl", "wheel")
+        Finding("py_file_not_python", "pkg/tool.py", "pkg-1.0.whl", "wheel")
     ]
 
 
@@ -120,7 +135,7 @@ def test_py_file_not_python_flags_binary_python_file() -> None:
     view = _DummyView([("pkg/tool.py", b"MZ....")])
 
     assert find_py_file_not_python(view, {}) == [
-        Finding("py_file_not_python", "tool.py", "pkg-1.0.whl", "wheel")
+        Finding("py_file_not_python", "pkg/tool.py", "pkg-1.0.whl", "wheel")
     ]
 
 
@@ -139,4 +154,4 @@ def test_py_file_not_python_is_enabled_by_default() -> None:
 
         findings = analyze_artifacts([make_local_artifact(path)], {}, content=True)
 
-        assert any(f.name == "py_file_not_python" and f.value == "tool.py" for f in findings)
+        assert any(f.name == "py_file_not_python" and f.value == "demo/tool.py" for f in findings)

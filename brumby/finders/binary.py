@@ -39,8 +39,29 @@ def _wheel_tags(filename: str) -> str:
     return "-".join(parts[2:]) if len(parts) == 5 else filename
 
 
-def _leaf_name(path: str) -> str:
-    return path.rsplit("/", 1)[-1]
+_NATIVE_EXTS = {"so", "pyd", "dylib"}
+
+
+def _normalize_native_leaf(leaf: str) -> str:
+    """Strip the CPython ABI/platform tag from a compiled extension's filename
+    (e.g. "_native.cpython-311-darwin.so" -> "_native.so", "_native.cp311-
+    cp311-win_amd64.pyd" -> "_native.pyd"), so a routine Python-version or
+    arch rebuild isn't seen as a brand new binary.
+
+    Only strips when the final segment is itself a known extension -- Unix's
+    "libfoo.so.3" convention puts a version number *after* the real
+    extension, and collapsing that would eat the ".so" instead of a tag.
+    """
+    parts = leaf.split(".")
+    if len(parts) <= 2 or parts[-1].lower() not in _NATIVE_EXTS:
+        return leaf
+    return f"{parts[0]}.{parts[-1]}"
+
+
+def _binary_value(view: ArtifactView, name: str) -> str:
+    rel = view.relative_name(name)
+    dirpart, sep, leaf = rel.rpartition("/")
+    return f"{dirpart}{sep}{_normalize_native_leaf(leaf)}"
 
 
 def _scan_binary_headers(view: ArtifactView) -> dict[str, str]:
@@ -131,17 +152,17 @@ def find_binary_types(view: ArtifactView, cfg: dict) -> list[Finding]:
     found = _scan_binary_headers(view)
     results = []
     if "elf" in found:
-        results.append(Finding("has_elf_binary", _leaf_name(found["elf"]), view.filename, view.resource))
+        results.append(Finding("has_elf_binary", _binary_value(view, found["elf"]), view.filename, view.resource))
     if "pe" in found:
-        results.append(Finding("has_pe_binary", _leaf_name(found["pe"]), view.filename, view.resource))
+        results.append(Finding("has_pe_binary", _binary_value(view, found["pe"]), view.filename, view.resource))
     if "macho" in found:
-        results.append(Finding("has_macho_binary", _leaf_name(found["macho"]), view.filename, view.resource))
+        results.append(Finding("has_macho_binary", _binary_value(view, found["macho"]), view.filename, view.resource))
     if "aout" in found:
-        results.append(Finding("has_aout_binary", _leaf_name(found["aout"]), view.filename, view.resource))
+        results.append(Finding("has_aout_binary", _binary_value(view, found["aout"]), view.filename, view.resource))
     if "efi" in found:
-        results.append(Finding("has_efi_binary", _leaf_name(found["efi"]), view.filename, view.resource))
+        results.append(Finding("has_efi_binary", _binary_value(view, found["efi"]), view.filename, view.resource))
     if "com" in found:
-        results.append(Finding("has_com_binary", _leaf_name(found["com"]), view.filename, view.resource))
+        results.append(Finding("has_com_binary", _binary_value(view, found["com"]), view.filename, view.resource))
     return results
 
 
@@ -153,14 +174,14 @@ def find_binary_types(view: ArtifactView, cfg: dict) -> list[Finding]:
 )
 def find_py_file_not_python(view: ArtifactView, cfg: dict) -> list[Finding]:
     found = _scan_non_python_py_files(view)
-    return [Finding("py_file_not_python", _leaf_name(name), view.filename, view.resource) for name in found]
+    return [Finding("py_file_not_python", _binary_value(view, name), view.filename, view.resource) for name in found]
 
 
 @register("has_elf_binary", "Archive contains an ELF binary", kind="sketchy", needs_content=True)
 def find_elf_binary(view: ArtifactView, cfg: dict) -> list[Finding]:
     found = _scan_binary_headers(view)
     if "elf" in found:
-        return [Finding("has_elf_binary", _leaf_name(found["elf"]), view.filename, view.resource)]
+        return [Finding("has_elf_binary", _binary_value(view, found["elf"]), view.filename, view.resource)]
     return []
 
 
@@ -168,7 +189,7 @@ def find_elf_binary(view: ArtifactView, cfg: dict) -> list[Finding]:
 def find_pe_binary(view: ArtifactView, cfg: dict) -> list[Finding]:
     found = _scan_binary_headers(view)
     if "pe" in found:
-        return [Finding("has_pe_binary", _leaf_name(found["pe"]), view.filename, view.resource)]
+        return [Finding("has_pe_binary", _binary_value(view, found["pe"]), view.filename, view.resource)]
     return []
 
 
@@ -176,7 +197,7 @@ def find_pe_binary(view: ArtifactView, cfg: dict) -> list[Finding]:
 def find_macho_binary(view: ArtifactView, cfg: dict) -> list[Finding]:
     found = _scan_binary_headers(view)
     if "macho" in found:
-        return [Finding("has_macho_binary", _leaf_name(found["macho"]), view.filename, view.resource)]
+        return [Finding("has_macho_binary", _binary_value(view, found["macho"]), view.filename, view.resource)]
     return []
 
 
@@ -184,7 +205,7 @@ def find_macho_binary(view: ArtifactView, cfg: dict) -> list[Finding]:
 def find_aout_binary(view: ArtifactView, cfg: dict) -> list[Finding]:
     found = _scan_binary_headers(view)
     if "aout" in found:
-        return [Finding("has_aout_binary", _leaf_name(found["aout"]), view.filename, view.resource)]
+        return [Finding("has_aout_binary", _binary_value(view, found["aout"]), view.filename, view.resource)]
     return []
 
 
@@ -192,7 +213,7 @@ def find_aout_binary(view: ArtifactView, cfg: dict) -> list[Finding]:
 def find_efi_binary(view: ArtifactView, cfg: dict) -> list[Finding]:
     found = _scan_binary_headers(view)
     if "efi" in found:
-        return [Finding("has_efi_binary", _leaf_name(found["efi"]), view.filename, view.resource)]
+        return [Finding("has_efi_binary", _binary_value(view, found["efi"]), view.filename, view.resource)]
     return []
 
 
@@ -200,7 +221,7 @@ def find_efi_binary(view: ArtifactView, cfg: dict) -> list[Finding]:
 def find_com_binary(view: ArtifactView, cfg: dict) -> list[Finding]:
     found = _scan_binary_headers(view)
     if "com" in found:
-        return [Finding("has_com_binary", _leaf_name(found["com"]), view.filename, view.resource)]
+        return [Finding("has_com_binary", _binary_value(view, found["com"]), view.filename, view.resource)]
     return []
 
 
