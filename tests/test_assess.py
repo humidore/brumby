@@ -43,7 +43,7 @@ def _boom(*args, **kwargs):
     raise AssertionError("this code path should not run")
 
 
-def test_assess_reports_high_risk_for_first_release_without_scanning(
+def test_assess_reports_too_new_for_first_release_without_scanning(
     monkeypatch, capsys
 ) -> None:
     monkeypatch.setattr(
@@ -58,7 +58,7 @@ def test_assess_reports_high_risk_for_first_release_without_scanning(
     monkeypatch.setattr(cli, "check_package", _boom)
 
     assert cli.cmd_assess(_args()) == 0
-    assert capsys.readouterr().out == cli._assess_line("demo", "high") + "\n"
+    assert capsys.readouterr().out == cli._assess_line("demo", "too new") + "\n"
 
 
 def test_assess_check_mode_is_high_risk_for_any_sketchy_diff_by_default(
