@@ -4,9 +4,10 @@ requires-python = ">=3.11"
 
 [[package]]
 name = "brumby"
-version = "0.1.0"
+version = "0.2.0"
 source = { editable = "." }
 dependencies = [
+    { name = "keke" },
     { name = "packaging" },
     { name = "requests" },
     { name = "seekablehttpfile" },
@@ -19,6 +20,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
+    { name = "keke" },
     { name = "packaging" },
     { name = "requests" },
     { name = "seekablehttpfile" },
