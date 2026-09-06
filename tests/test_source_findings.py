@@ -1,3 +1,4 @@
+import gc
 import tempfile
 import zipfile
 from pathlib import Path
@@ -6,6 +7,7 @@ import brumby.finders.source as source_mod
 from brumby.analyze import analyze_artifacts
 from brumby.artifact import make_local_artifact
 from brumby.finders.source import (
+    _has_import_time_spawn,
     find_giant_python_file,
     find_high_entropy_blob,
     find_high_entropy_source,
@@ -147,6 +149,15 @@ def test_spawns_at_import_skips_giant_files(monkeypatch) -> None:
     view = _DummyView([("pkg/module.py", content)])
 
     assert find_spawns_at_import(view, {}) == []
+
+
+def test_has_import_time_spawn_restores_gc_state_on_success_and_syntax_error() -> None:
+    gc.enable()
+    assert _has_import_time_spawn(b"subprocess.call(['ls'])\n") is True
+    assert gc.isenabled()
+
+    assert _has_import_time_spawn(b"def broken(:\n") is False
+    assert gc.isenabled()
 
 
 def test_high_entropy_blob_reports_overly_long_lines() -> None:

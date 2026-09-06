@@ -8,6 +8,7 @@ import zipfile
 from pathlib import Path
 from typing import Any
 
+import keke
 import requests
 
 from .analyze import (
@@ -15,6 +16,7 @@ from .analyze import (
     analyze_release,
     check_artifacts,
     check_package,
+    check_urls,
     get_artifacts,
     resolve_versions,
     select_assess_mode,
@@ -22,8 +24,15 @@ from .analyze import (
 )
 from .artifact import ArtifactView, make_local_artifact
 from .config import get_settings, get_thresholds, is_enabled, load_config
+from . import network
 from .pypi import get_latest_version, get_package_info, release_upload_bounds, validate_version
 from .registry import get_finders
+
+
+def _load_config(args: argparse.Namespace) -> dict:
+    config = load_config(Path(args.config) if args.config else None)
+    network.configure(config)
+    return config
 
 
 def _fmt_vals(vals: frozenset[Any]) -> str:
@@ -46,6 +55,10 @@ def _fmt_release_version(version: str, bounds: tuple[datetime.datetime | None, d
     if oldest is None:
         return f"{version} (base: unknown)"
     return f"{version} (base: {oldest.date().isoformat()})"
+
+
+def _looks_like_url(s: str) -> bool:
+    return s.startswith("http://") or s.startswith("https://")
 
 
 def _is_404_http_error(exc: BaseException) -> bool:
@@ -244,6 +257,7 @@ def _extract_artifact_to(artifact: Any, dest: Path) -> None:
 
 
 def cmd_export(args: argparse.Namespace) -> int:
+    _load_config(args)
     old_path = Path(args.package)
     new_path = Path(args.other) if args.other else None
     output = Path(args.output) if args.output else Path(f"brumby-export-{old_path.stem}")
@@ -309,6 +323,8 @@ def cmd_export(args: argparse.Namespace) -> int:
 def _assess_line(project: str, risk: str) -> str:
     if risk == "did not scan":
         return f"{project:<24} did not scan"
+    if risk == "too new":
+        return f"{project:<24} \033[33mtoo new to evaluate\033[0m"
     if risk == "high":
         color = "\033[31m"
     else:
@@ -331,11 +347,23 @@ def _assess_error(project: str, message: str, as_json: bool) -> None:
 
 
 def cmd_check(args: argparse.Namespace) -> int:
-    config = load_config(Path(args.config) if args.config else None)
+    config = _load_config(args)
     old_path = Path(args.package)
     new_path = Path(args.other) if args.other else None
     try:
-        if old_path.is_file() and new_path is not None and new_path.is_file():
+        if args.other and _looks_like_url(args.package) and _looks_like_url(args.other):
+            package_label = "url compare"
+            print("URL compare:")
+            print(f"  old: {args.package}")
+            print(f"  new: {args.other}")
+            _stable_findings, _new_findings, diffs = check_urls(
+                args.package,
+                args.other,
+                callback=_default_callback,
+                config=config,
+                content=not args.fast,
+            )
+        elif old_path.is_file() and new_path is not None and new_path.is_file():
             old_artifact = make_local_artifact(old_path)
             new_artifact = make_local_artifact(new_path)
             package_label = "local compare"
@@ -438,7 +466,7 @@ def cmd_check(args: argparse.Namespace) -> int:
 
 
 def cmd_assess(args: argparse.Namespace) -> int:
-    config = load_config(Path(args.config) if args.config else None)
+    config = _load_config(args)
     local_path = Path(args.package)
     as_json = args.json
     try:
@@ -460,8 +488,8 @@ def cmd_assess(args: argparse.Namespace) -> int:
                 stable_version=args.stable or None,
                 new_version=args.new or None,
             )
-            if mode == "first-release":
-                risk = "high"
+            if mode in ("first-release", "too-new"):
+                risk = "too new"
             elif mode == "inspect":
                 version = new
                 if not version:
@@ -506,7 +534,7 @@ def cmd_assess(args: argparse.Namespace) -> int:
 
 def cmd_inspect(args: argparse.Namespace) -> int:
     try:
-        config = load_config(Path(args.config) if args.config else None)
+        config = _load_config(args)
         local_path = Path(args.package)
         if local_path.exists() and local_path.is_file():
             label = str(local_path)
@@ -551,7 +579,7 @@ def cmd_inspect(args: argparse.Namespace) -> int:
 
 
 def cmd_list_finders(args: argparse.Namespace) -> int:
-    config = load_config(Path(args.config) if args.config else None)
+    config = _load_config(args)
     print(f"{'NAME':<35} {'SCOPE':<12} {'KIND':<14} {'CONTENT':<8} {'ON':<4} DESCRIPTION")
     print("-" * 110)
     for spec in get_finders():
@@ -569,6 +597,8 @@ def _add_common(p: argparse.ArgumentParser) -> None:
     p.add_argument("--fast", action="store_true", help="Skip finders that read file content")
     p.add_argument("--save-artifacts", default="", metavar="DIR",
                    help="Download examined artifacts into DIR and use local files")
+    p.add_argument("--trace", default="", metavar="FILE",
+                   help="Write a chrome-trace-format profile of downloads/analysis to FILE")
 
 
 def main() -> None:
@@ -579,9 +609,9 @@ def main() -> None:
     sub = parser.add_subparsers(dest="command", metavar="COMMAND")
 
     check = sub.add_parser("check", help="Compare two releases (stable vs new by default)")
-    check.add_argument("package", help="Package name or local artifact path")
+    check.add_argument("package", help="Package name, local artifact path, or artifact URL")
     check.add_argument("other", nargs="?", default="",
-                       help="Optional second local artifact path for artifact-only compare")
+                       help="Optional second local artifact path or URL for a metadata-free artifact-only compare")
     _add_version_flags(check)
     check.add_argument("--cutoff", type=int, default=24, metavar="HOURS",
                        help="Hours threshold for stable classification (default: 24)")
@@ -633,23 +663,29 @@ def main() -> None:
                              help="Compare the newest release vs the newest release at least cutoff hours older")
     export.add_argument("--output", "-o", default="", metavar="DIR",
                         help="Output directory (default: ./brumby-export-<package>)")
+    export.add_argument("--config", default="", metavar="FILE", help="Path to brumby.toml")
     export.add_argument("--save-artifacts", default="", metavar="DIR",
                         help="Also save downloaded artifacts into DIR")
+    export.add_argument("--trace", default="", metavar="FILE",
+                        help="Write a chrome-trace-format profile of downloads/analysis to FILE")
 
     args = parser.parse_args()
-    if args.command == "check":
-        sys.exit(cmd_check(args))
-    elif args.command == "assess":
-        sys.exit(cmd_assess(args))
-    elif args.command == "inspect":
-        sys.exit(cmd_inspect(args))
-    elif args.command == "finders":
-        sys.exit(cmd_list_finders(args))
-    elif args.command == "export":
-        sys.exit(cmd_export(args))
-    else:
-        parser.print_help()
-        sys.exit(1)
+    trace_file = open(args.trace, "w") if getattr(args, "trace", "") else None
+    with keke.TraceOutput(file=trace_file):
+        if args.command == "check":
+            code = cmd_check(args)
+        elif args.command == "assess":
+            code = cmd_assess(args)
+        elif args.command == "inspect":
+            code = cmd_inspect(args)
+        elif args.command == "finders":
+            code = cmd_list_finders(args)
+        elif args.command == "export":
+            code = cmd_export(args)
+        else:
+            parser.print_help()
+            code = 1
+    sys.exit(code)
 
 
 if __name__ == "__main__":

@@ -129,7 +129,7 @@ def test_select_assess_mode_uses_check_last_when_no_recent_release_but_multiple_
     assert new == "1.1"
 
 
-def test_select_assess_mode_falls_back_to_inspect_for_single_day_history(monkeypatch) -> None:
+def test_select_assess_mode_falls_back_to_too_new_for_single_day_history(monkeypatch) -> None:
     _freeze_now(monkeypatch)
     info = {
         "releases": {
@@ -140,6 +140,6 @@ def test_select_assess_mode_falls_back_to_inspect_for_single_day_history(monkeyp
 
     mode, stable, new = select_assess_mode("pkg", cutoff_hours=24, pkg_info=info)
 
-    assert mode == "inspect"
+    assert mode == "too-new"
     assert stable is None
     assert new == "1.1"

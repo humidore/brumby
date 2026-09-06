@@ -1,7 +1,9 @@
 import datetime
 
+import keke
+
 from . import finders as _finders_pkg  # ensures all finders are registered
-from .artifact import Artifact, ArtifactView, make_artifact
+from .artifact import Artifact, ArtifactView, make_artifact, make_url_artifact
 from .compare import DiffCallback, compare_releases
 from .config import get_settings, is_enabled, load_config
 from .finding import Finding
@@ -109,6 +111,7 @@ def prepare_scan_artifacts(artifacts: list[Artifact]) -> list[Artifact]:
     return scan_artifacts
 
 
+@keke.ktrace("package", "version")
 def get_artifacts(
     package: str,
     version: str,
@@ -148,6 +151,7 @@ def _kinds_map() -> dict[str, str]:
     return {s.name: s.kind for s in get_finders()}
 
 
+@keke.ktrace()
 def analyze_artifacts(
     artifacts: list[Artifact],
     config: dict,
@@ -240,10 +244,15 @@ def select_assess_mode(
     """Pick the assess mode and target versions for a package.
 
     Returns (mode, stable_version, new_version).
-    mode is one of: "check", "check-last", "inspect", "first-release".
+    mode is one of: "check", "check-last", "inspect", "first-release", "too-new".
 
     Supplying stable_version and/or new_version skips auto-detection and uses those
     versions directly, falling back to "inspect" when they yield no distinct baseline.
+    Without explicit versions, auto-detection that can't find any pair of releases to
+    diff (nothing old enough by cutoff_hours, and everything uploaded the same day)
+    falls back to "too-new" rather than "inspect" — a raw, undiffed finding count on a
+    single release is a much noisier signal than a diff against a real baseline, so it
+    isn't reported as a finding-based verdict at all.
     """
     if pkg_info is None:
         pkg_info = get_package_info(package)
@@ -257,6 +266,8 @@ def select_assess_mode(
     if len(versioned) == 1:
         # A package's first-ever release has nothing to diff against, so it is
         # unvetted by definition regardless of what the finders would report.
+        # Callers should treat this as "too new to evaluate", not as a positive
+        # high-risk signal from the finders.
         return "first-release", None, versioned[0][1]
 
     if stable_version or new_version:
@@ -282,9 +293,10 @@ def select_assess_mode(
             return "check-last", stable, new
 
     latest = pkg_info.get("info", {}).get("version") or initial_latest
-    return "inspect", None, latest
+    return "too-new", None, latest
 
 
+@keke.ktrace("version")
 def analyze_release(
     artifacts: list[Artifact],
     pkg_info: dict,
@@ -322,6 +334,7 @@ def analyze_release(
     return findings
 
 
+@keke.ktrace("old_label", "new_label")
 def check_artifacts(
     old_artifacts: list[Artifact],
     new_artifacts: list[Artifact],
@@ -349,6 +362,38 @@ def check_artifacts(
         kinds=_kinds_map(),
     )
     return old_findings, new_findings, diffs
+
+
+@keke.ktrace("old_url", "new_url")
+def check_urls(
+    old_url: str,
+    new_url: str,
+    *,
+    old_label: str | None = None,
+    new_label: str | None = None,
+    callback: DiffCallback | None = None,
+    config: dict | None = None,
+    content: bool = True,
+) -> tuple[list[Finding], list[Finding], list[tuple]]:
+    """Compare two artifacts fetched directly by URL, with no PyPI metadata at all.
+
+    For historical or known-bad releases pulled from outside a package's normal
+    PyPI release index, where there's nothing to look up by name/version and often
+    no surviving JSON metadata for the file (size, digests, upload time) either --
+    only the two download URLs. Each URL is fetched lazily, the same way a normal
+    PyPI-hosted artifact is.
+    """
+    old_artifact = make_url_artifact(old_url)
+    new_artifact = make_url_artifact(new_url)
+    return check_artifacts(
+        [old_artifact],
+        [new_artifact],
+        old_label=old_label or old_artifact.filename,
+        new_label=new_label or new_artifact.filename,
+        callback=callback,
+        config=config,
+        content=content,
+    )
 
 
 def find_last_two_versions(
@@ -387,6 +432,7 @@ def find_last_with_cutoff(
     return older[0][1], newest_version
 
 
+@keke.ktrace("package")
 def check_package(
     package: str,
     *,
