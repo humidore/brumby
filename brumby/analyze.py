@@ -2,7 +2,7 @@ import datetime
 
 import keke
 
-from . import finders as _finders_pkg  # ensures all finders are registered
+from . import finders as _finders_pkg  # noqa: F401  # ensures all finders are registered
 from .artifact import Artifact, ArtifactView, make_artifact, make_url_artifact
 from .compare import DiffCallback, compare_releases
 from .config import get_settings, is_enabled, load_config
@@ -70,10 +70,10 @@ def _wheel_arch_score(platform: str) -> int:
     return 0
 
 
-def _wheel_scan_score(artifact: Artifact) -> tuple[int, int, int, str]:
+def _wheel_scan_score(artifact: Artifact) -> tuple[int, int, int, int, str]:
     parts = artifact.filename[:-4].rsplit("-", 4)
     if len(parts) != 5:
-        return (-1, -1, -1, artifact.filename)
+        return (-1, -1, -1, -1, artifact.filename)
     platform = parts[4]
     python_family = _python_tag_family_score(parts[2])
     arch_preference = _wheel_arch_score(platform)

@@ -4,7 +4,6 @@ import tempfile
 import zipfile
 from pathlib import Path
 
-from brumby.analyze import analyze_artifacts
 from brumby.artifact import Artifact, ArtifactView, make_local_artifact
 from brumby.finders.archive import (
     find_archive_umask,
