@@ -1,4 +1,5 @@
 import datetime
+import logging
 
 import keke
 
@@ -20,6 +21,8 @@ from .pypi import (
 from .registry import get_finders
 
 _MAX_SCAN_BYTES = 300 * 1024 * 1024
+
+log = logging.getLogger(__name__)
 
 
 class ScanSkipped(RuntimeError):
@@ -174,7 +177,11 @@ def analyze_artifacts(
                 try:
                     findings.extend(spec.fn(view, get_settings(config, spec.name)))
                 except Exception:
-                    pass
+                    log.exception(
+                        "finder %s failed while scanning %s",
+                        spec.name,
+                        view.filename,
+                    )
     finally:
         for v in views:
             v.close()
