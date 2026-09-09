@@ -10,6 +10,7 @@ and no rewriting, matching plain unproxied internet access.
 """
 
 from typing import Literal
+import keke
 
 Purpose = Literal["metadata", "artifacts"]
 
@@ -29,7 +30,7 @@ def configure(config: dict) -> None:
             "url_replace": section.get("url_replace", {}),
         }
 
-
+@keke.ktrace("url")
 def prepare_request(purpose: Purpose, url: str) -> tuple[str, dict[str, str] | None]:
     """Return (url, proxies) for a request of the given purpose.
 
