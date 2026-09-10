@@ -1,4 +1,5 @@
-from brumby.analyze import ScanSkipped, prepare_scan_artifacts
+import brumby.analyze as analyze
+from brumby.analyze import ScanSkipped, get_artifacts, prepare_scan_artifacts
 from brumby import cli
 
 
@@ -66,6 +67,31 @@ def test_prepare_scan_artifacts_prefers_cp_over_pp_over_py_on_tie() -> None:
     selected = prepare_scan_artifacts(artifacts)
 
     assert [a.filename for a in selected] == ["pkg-1.0-cp3-cp3-manylinux_x86_64.whl"]
+
+
+def test_get_artifacts_fetches_version_endpoint_when_project_index_has_no_files(monkeypatch) -> None:
+    release_files = [{
+        "filename": "pkg-1.0-py3-none-any.whl",
+        "url": "https://files.pythonhosted.org/pkg-1.0-py3-none-any.whl",
+        "packagetype": "bdist_wheel",
+        "size": 10,
+    }]
+    calls = []
+
+    def fake_get_release_files(package, version):
+        calls.append((package, version))
+        return release_files
+
+    monkeypatch.setattr(analyze, "get_release_files", fake_get_release_files)
+
+    artifacts = get_artifacts(
+        "pkg",
+        "1.0",
+        pkg_info={"releases": {"1.0": []}},
+    )
+
+    assert calls == [("pkg", "1.0")]
+    assert [artifact.filename for artifact in artifacts] == ["pkg-1.0-py3-none-any.whl"]
 
 
 def test_prepare_scan_artifacts_skips_when_selected_total_exceeds_limit() -> None:
