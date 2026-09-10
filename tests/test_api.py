@@ -283,22 +283,22 @@ def test_api_none_config_does_not_search_for_a_config_file(tmp_path, monkeypatch
     }["imports_base64"].enabled
 
 
-def test_export_returns_review_paths(tmp_path) -> None:
+def test_export_returns_paths_and_handles_non_utf8_files(tmp_path) -> None:
     old = tmp_path / "old.whl"
     new = tmp_path / "new.whl"
     with zipfile.ZipFile(old, "w") as archive:
         archive.mkdir("demo/")
-        archive.writestr("demo/data.bin", b"old data")
+        archive.writestr("demo/data.bin", b"old\xffdata")
     with zipfile.ZipFile(new, "w") as archive:
         archive.mkdir("demo/")
-        archive.writestr("demo/data.bin", b"new data")
+        archive.writestr("demo/data.bin", b"new\xffdata")
 
     result = api.export(str(old), str(new), output=tmp_path / "export", config={})
 
     assert result.prompt.read_text().endswith("  - Last line: the literal text DONE\n")
-    assert (result.old_dir / "data.bin").read_bytes() == b"old data"
-    assert (result.new_dir / "data.bin").read_bytes() == b"new data"
-    assert (result.output / "diff.txt").exists()
+    assert (result.old_dir / "data.bin").read_bytes() == b"old\xffdata"
+    assert (result.new_dir / "data.bin").read_bytes() == b"new\xffdata"
+    assert not (result.output / "diff.txt").exists()
 
 
 def test_export_extracts_local_tar_archives(tmp_path) -> None:

@@ -8,7 +8,6 @@ reconstructing command-line arguments.
 from dataclasses import dataclass
 import datetime
 from pathlib import Path
-import subprocess
 import tarfile
 from typing import Any, Literal, cast
 
@@ -143,12 +142,12 @@ This directory contains two extracted PyPI release source trees for comparison.
 
   old/       {old}
   new/       {new}
-  diff.txt   unified diff between old/ and new/ (diff -ruN old new)
 
-Review diff.txt together with the full source trees in old/ and new/ for signs of
-malicious or suspicious behavior introduced in the new release: exfiltration,
-obfuscation, unexpected network/filesystem/process access, credential harvesting,
-or other supply-chain tampering.
+Review the full source trees in old/ and new/ for signs of malicious or suspicious
+behavior introduced in the new release: exfiltration, obfuscation, unexpected
+network/filesystem/process access, credential harvesting, or other supply-chain
+tampering. As a starting point, you can run `diff -qr old new` yourself to list
+files that differ.
 
 Output format (exactly):
   - First line: a single integer from 0 to 100 rating how malicious this change
@@ -527,10 +526,6 @@ def export(
     old_dir, new_dir = target / "old", target / "new"
     _extract_artifact(old_artifact, old_dir)
     _extract_artifact(new_artifact, new_dir)
-    diff_result = subprocess.run(
-        ["diff", "-ruN", "old", "new"], cwd=target, capture_output=True, text=True,
-    )
-    (target / "diff.txt").write_text(diff_result.stdout)
     prompt = target / "PROMPT.md"
     prompt.write_text(_EXPORT_PROMPT.format(old=old_ref.label, new=new_ref.label))
     return ExportResult(target, old_ref, new_ref, old_dir, new_dir, prompt)
