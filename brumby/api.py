@@ -11,6 +11,8 @@ from pathlib import Path
 import tarfile
 from typing import Any, Literal, cast
 
+import keke
+
 from . import network
 from .analyze import (
     ScanSkipped,
@@ -191,6 +193,7 @@ def _looks_like_url(value: str) -> bool:
     return value.startswith("http://") or value.startswith("https://")
 
 
+@keke.ktrace("package", "other")
 def check(
     package: str,
     other: str | None = None,
@@ -278,6 +281,7 @@ def check(
     )
 
 
+@keke.ktrace()
 def classify_diffs(diffs: list[Difference] | list[Diff], config: dict) -> Risk:
     sketchy_threshold, informational_threshold = get_thresholds(config)
     kinds = [diff.kind if isinstance(diff, Difference) else diff[6] for diff in diffs]
@@ -286,6 +290,7 @@ def classify_diffs(diffs: list[Difference] | list[Diff], config: dict) -> Risk:
     return "high" if sketchy >= sketchy_threshold and informational >= informational_threshold else "average"
 
 
+@keke.ktrace()
 def classify_findings(findings: list[Finding], config: dict) -> Risk:
     sketchy_threshold, informational_threshold = get_thresholds(config)
     kinds = {spec.name: spec.kind for spec in get_finders()}
@@ -294,6 +299,7 @@ def classify_findings(findings: list[Finding], config: dict) -> Risk:
     return "high" if sketchy >= sketchy_threshold and informational >= informational_threshold else "average"
 
 
+@keke.ktrace("package")
 def assess(
     package: str,
     *,
@@ -368,6 +374,7 @@ def _run_finder(artifact: Any, config: dict, name: str, content: bool) -> list[F
         view.close()
 
 
+@keke.ktrace("package", "version", "finder")
 def inspect(
     package: str,
     version: str | None = None,
@@ -403,6 +410,7 @@ def inspect(
     return InspectResult(f"{package} {selected}", findings, finder)
 
 
+@keke.ktrace()
 def finders(config: dict | None = None) -> list[FinderInfo]:
     """List registered finders under the active configuration."""
     settings = _configure(config)
@@ -476,6 +484,7 @@ def _extract_artifact(artifact: Any, dest: Path) -> None:
         archive.close()
 
 
+@keke.ktrace("package", "other")
 def export(
     package: str,
     other: str | None = None,

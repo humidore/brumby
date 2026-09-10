@@ -345,6 +345,15 @@ def test_main_opens_trace_output(monkeypatch, tmp_path) -> None:
     assert trace.exists()
 
 
+def test_main_prints_distribution_version(monkeypatch, capsys) -> None:
+    monkeypatch.setattr(cli.sys, "argv", ["brumby", "--version"])
+    monkeypatch.setattr(cli, "distribution_version", lambda name: "1.2.3")
+
+    with pytest.raises(SystemExit, match="0"):
+        cli.main()
+    assert capsys.readouterr().out == "brumby 1.2.3\n"
+
+
 def test_main_without_command_prints_help(monkeypatch, capsys) -> None:
     monkeypatch.setattr(cli.sys, "argv", ["brumby"])
 

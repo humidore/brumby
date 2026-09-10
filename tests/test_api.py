@@ -9,6 +9,20 @@ from brumby import api
 from brumby.finding import Finding
 
 
+def test_every_public_operation_is_traced() -> None:
+    operations = (
+        "assess",
+        "check",
+        "classify_diffs",
+        "classify_findings",
+        "export",
+        "finders",
+        "inspect",
+    )
+
+    assert all(hasattr(getattr(api, name), "__wrapped__") for name in operations)
+
+
 def _wheel(path: Path, source: bytes) -> None:
     with zipfile.ZipFile(path, "w") as archive:
         archive.writestr("demo/__init__.py", source)

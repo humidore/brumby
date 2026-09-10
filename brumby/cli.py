@@ -1,6 +1,7 @@
 import argparse
 import json
 import sys
+from importlib.metadata import version as distribution_version
 from pathlib import Path
 from typing import Any
 
@@ -297,6 +298,9 @@ def main() -> None:
     parser = argparse.ArgumentParser(
         prog="brumby",
         description="Compare PyPI releases for suspicious changes.",
+    )
+    parser.add_argument(
+        "--version", action="version", version=f"%(prog)s {distribution_version('brumby')}"
     )
     sub = parser.add_subparsers(dest="command", metavar="COMMAND")
 
