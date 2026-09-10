@@ -1,10 +1,14 @@
 [build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
+requires = ["setuptools>=65", "setuptools-scm>=8"]
+build-backend = "setuptools.build_meta"
 
 [project]
 name = "brumby"
-version = "0.3.0"
+dynamic = ["version"]
+description = "Analyzes fresh python releases for worsening aspects"
+readme = "README.md"
+license = "MIT"
+authors = [{ name = "Tim Hatch", email = "tim@timhatch.com" }]
 requires-python = ">=3.11"
 dependencies = [
     "keke",
@@ -13,11 +17,59 @@ dependencies = [
     "seekablehttpfile",
 ]
 
+[project.urls]
+Homepage = "https://github.com/humidore/brumby/"
+
 [project.scripts]
 brumby = "brumby.cli:main"
 
-[tool.hatch.build.targets.wheel]
-packages = ["brumby"]
+[project.optional-dependencies]
+test = [
+    "coverage>=6",
+    "pytest>=8",
+]
+dev = [
+    "checkdeps==0.9.0",
+    "mypy==1.19.1",
+    "ruff==0.15.6",
+    "tox==4.50.0",
+    "tox-uv==1.33.4",
+    "types-requests",
+]
+
+[tool.setuptools]
+packages = ["brumby", "brumby.finders"]
+include-package-data = true
+
+[tool.setuptools_scm]
+write_to = "brumby/_version.py"
+
+[tool.coverage.run]
+branch = true
+source = ["brumby", "tests"]
+
+[tool.coverage.report]
+fail_under = 70
+precision = 1
+show_missing = true
+skip_covered = true
+
+[tool.mypy]
+ignore_missing_imports = true
+
+[tool.tox]
+envlist = ["py311", "py312", "py313", "py314", "coverage"]
+
+[tool.tox.env_run_base]
+deps = [".[test]"]
+commands = [["coverage", "run", "-m", "pytest"]]
+setenv = { COVERAGE_FILE = "{toxworkdir}/.coverage.{envname}" }
+
+[tool.tox.env.coverage]
+deps = ["coverage"]
+commands = [["coverage", "combine"], ["coverage", "report"]]
+setenv = { COVERAGE_FILE = "{toxworkdir}/.coverage" }
+depends = ["py311", "py312", "py313", "py314"]
 
 [dependency-groups]
-dev = ["pytest>=7"]
+dev = ["pytest>=8"]

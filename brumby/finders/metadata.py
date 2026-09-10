@@ -3,7 +3,6 @@
 import datetime
 import tarfile
 import zipfile
-from typing import Any
 
 from ..artifact import ArtifactView
 from ..finding import Finding
@@ -219,11 +218,11 @@ def find_packager_timezone(view: ArtifactView, cfg: dict) -> list[Finding]:
 )
 def find_metadata_version(view: ArtifactView, cfg: dict) -> list[Finding]:
     if view.filetype == "wheel":
-        candidate_names = (
+        candidate_names = [
             i.filename for i in view.infos() if i.filename.endswith(".dist-info/METADATA")
-        )
+        ]
     elif view.filetype == "sdist":
-        candidate_names = ("PKG-INFO",)
+        candidate_names = ["PKG-INFO"]
     else:
         return []
 

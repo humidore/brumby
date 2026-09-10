@@ -4,7 +4,6 @@ import json
 import subprocess
 import sys
 import tarfile
-import zipfile
 from pathlib import Path
 from typing import Any
 
@@ -441,7 +440,7 @@ def cmd_check(args: argparse.Namespace) -> int:
                 save_dir=args.save_artifacts or None,
             )
             package_label = args.package
-    except ScanSkipped as e:
+    except ScanSkipped:
         print(f"{package_label if 'package_label' in locals() else args.package}: did not scan")
         return 0
     except requests.HTTPError as e:
