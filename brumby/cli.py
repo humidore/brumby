@@ -381,5 +381,5 @@ def main() -> None:
     sys.exit(code)
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: no cover - exercised by the installed script
     main()
