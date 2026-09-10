@@ -3,18 +3,11 @@ try:
 except ImportError:  # pragma: no cover
     __version__ = "dev"
 
+from . import api
 from .analyze import check_package, get_artifacts
 from .compare import DiffCallback, compare_releases
 from .finding import Finding
 from .registry import get_finders, register
 
-__all__ = [
-    "__version__",
-    "check_package",
-    "compare_releases",
-    "get_artifacts",
-    "get_finders",
-    "register",
-    "DiffCallback",
-    "Finding",
-]
+# The direct imports above remain available to old callers, but brumby.api is the
+# supported library interface.

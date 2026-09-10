@@ -2,7 +2,7 @@ import json
 
 import requests
 
-from brumby import cli
+from brumby import api, cli
 from brumby.finding import Finding
 
 
@@ -47,15 +47,15 @@ def test_assess_reports_too_new_for_first_release_without_scanning(
     monkeypatch, capsys
 ) -> None:
     monkeypatch.setattr(
-        cli,
+        api,
         "get_package_info",
         lambda package: {
             "info": {"version": "1.0"},
             "releases": {"1.0": [{"upload_time_iso_8601": "2026-05-08T11:00:00+00:00"}]},
         },
     )
-    monkeypatch.setattr(cli, "get_artifacts", _boom)
-    monkeypatch.setattr(cli, "check_package", _boom)
+    monkeypatch.setattr(api, "get_artifacts", _boom)
+    monkeypatch.setattr(api, "check_package", _boom)
 
     assert cli.cmd_assess(_args()) == 0
     assert capsys.readouterr().out == cli._assess_line("demo", "too new") + "\n"
@@ -64,14 +64,14 @@ def test_assess_reports_too_new_for_first_release_without_scanning(
 def test_assess_check_mode_is_high_risk_for_any_sketchy_diff_by_default(
     monkeypatch, capsys
 ) -> None:
-    monkeypatch.setattr(cli, "get_package_info", lambda package: _pkg_info())
+    monkeypatch.setattr(api, "get_package_info", lambda package: _pkg_info())
     monkeypatch.setattr(
-        cli,
+        api,
         "select_assess_mode",
         lambda package, **kwargs: ("check", "1.0", "1.1"),
     )
     monkeypatch.setattr(
-        cli,
+        api,
         "check_package",
         lambda *args, **kwargs: (
             [],
@@ -98,15 +98,15 @@ def test_assess_check_mode_is_high_risk_for_any_sketchy_diff_by_default(
 def test_assess_check_mode_respects_configured_sus_threshold(
     monkeypatch, capsys
 ) -> None:
-    monkeypatch.setattr(cli, "get_package_info", lambda package: _pkg_info())
+    monkeypatch.setattr(api, "get_package_info", lambda package: _pkg_info())
     monkeypatch.setattr(
-        cli,
+        api,
         "select_assess_mode",
         lambda package, **kwargs: ("check", "1.0", "1.1"),
     )
     monkeypatch.setattr(cli, "load_config", lambda path: {"thresholds": {"sus": 2}})
     monkeypatch.setattr(
-        cli,
+        api,
         "check_package",
         lambda *args, **kwargs: (
             [],
@@ -133,15 +133,15 @@ def test_assess_check_mode_respects_configured_sus_threshold(
 def test_assess_inspect_mode_is_high_risk_for_any_sketchy_finding(
     monkeypatch, capsys
 ) -> None:
-    monkeypatch.setattr(cli, "get_package_info", lambda package: _pkg_info())
+    monkeypatch.setattr(api, "get_package_info", lambda package: _pkg_info())
     monkeypatch.setattr(
-        cli,
+        api,
         "select_assess_mode",
         lambda package, **kwargs: ("inspect", None, "1.1"),
     )
-    monkeypatch.setattr(cli, "get_artifacts", lambda *args, **kwargs: [object()])
+    monkeypatch.setattr(api, "get_artifacts", lambda *args, **kwargs: [object()])
     monkeypatch.setattr(
-        cli,
+        api,
         "analyze_release",
         lambda *args, **kwargs: [
             Finding("has_pth_file", True, "demo-1.1-py3-none-any.whl", "wheel"),
@@ -161,8 +161,8 @@ def test_assess_uses_supplied_versions(monkeypatch, capsys) -> None:
         recorded.update(kwargs)
         return ([], [], [])
 
-    monkeypatch.setattr(cli, "get_package_info", lambda package: _pkg_info())
-    monkeypatch.setattr(cli, "check_package", _fake_check_package)
+    monkeypatch.setattr(api, "get_package_info", lambda package: _pkg_info())
+    monkeypatch.setattr(api, "check_package", _fake_check_package)
 
     assert cli.cmd_assess(_args(stable="1.0", new="1.1")) == 0
     assert recorded["stable_version"] == "1.0"
@@ -177,8 +177,8 @@ def test_assess_supplied_new_resolves_stable_from_its_release_time(monkeypatch) 
         recorded.update(kwargs)
         return ([], [], [])
 
-    monkeypatch.setattr(cli, "get_package_info", lambda package: _pkg_info())
-    monkeypatch.setattr(cli, "check_package", _fake_check_package)
+    monkeypatch.setattr(api, "get_package_info", lambda package: _pkg_info())
+    monkeypatch.setattr(api, "check_package", _fake_check_package)
 
     assert cli.cmd_assess(_args(new="1.1")) == 0
     assert recorded["stable_version"] == "1.0"
@@ -192,10 +192,10 @@ def test_assess_supplied_new_without_baseline_falls_back_to_inspect(monkeypatch)
         recorded["version"] = version
         return [object()]
 
-    monkeypatch.setattr(cli, "get_package_info", lambda package: _pkg_info())
-    monkeypatch.setattr(cli, "check_package", _boom)
-    monkeypatch.setattr(cli, "get_artifacts", _fake_get_artifacts)
-    monkeypatch.setattr(cli, "analyze_release", lambda *args, **kwargs: [])
+    monkeypatch.setattr(api, "get_package_info", lambda package: _pkg_info())
+    monkeypatch.setattr(api, "check_package", _boom)
+    monkeypatch.setattr(api, "get_artifacts", _fake_get_artifacts)
+    monkeypatch.setattr(api, "analyze_release", lambda *args, **kwargs: [])
 
     assert cli.cmd_assess(_args(new="1.0")) == 0
     assert recorded["version"] == "1.0"
@@ -212,7 +212,7 @@ def test_assess_rejects_supplied_versions_for_local_artifact(tmp_path, capsys) -
 
 
 def test_assess_rejects_invalid_supplied_version(monkeypatch, capsys) -> None:
-    monkeypatch.setattr(cli, "get_package_info", lambda package: _pkg_info())
+    monkeypatch.setattr(api, "get_package_info", lambda package: _pkg_info())
 
     assert cli.cmd_assess(_args(new="not a version")) == 1
     captured = capsys.readouterr()
@@ -221,13 +221,13 @@ def test_assess_rejects_invalid_supplied_version(monkeypatch, capsys) -> None:
 
 
 def test_assess_json_emits_project_and_risk(monkeypatch, capsys) -> None:
-    monkeypatch.setattr(cli, "get_package_info", lambda package: _pkg_info())
+    monkeypatch.setattr(api, "get_package_info", lambda package: _pkg_info())
     monkeypatch.setattr(
-        cli,
+        api,
         "select_assess_mode",
         lambda package, **kwargs: ("check", "1.0", "1.1"),
     )
-    monkeypatch.setattr(cli, "check_package", lambda *args, **kwargs: ([], [], []))
+    monkeypatch.setattr(api, "check_package", lambda *args, **kwargs: ([], [], []))
 
     assert cli.cmd_assess(_args(as_json=True)) == 0
     out = capsys.readouterr().out
@@ -235,14 +235,14 @@ def test_assess_json_emits_project_and_risk(monkeypatch, capsys) -> None:
 
 
 def test_assess_json_high_risk_exits_0(monkeypatch, capsys) -> None:
-    monkeypatch.setattr(cli, "get_package_info", lambda package: _pkg_info())
+    monkeypatch.setattr(api, "get_package_info", lambda package: _pkg_info())
     monkeypatch.setattr(
-        cli,
+        api,
         "select_assess_mode",
         lambda package, **kwargs: ("check", "1.0", "1.1"),
     )
     monkeypatch.setattr(
-        cli,
+        api,
         "check_package",
         lambda *args, **kwargs: (
             [],
@@ -267,14 +267,14 @@ def test_assess_json_high_risk_exits_0(monkeypatch, capsys) -> None:
 
 
 def test_assess_json_did_not_scan(monkeypatch, capsys) -> None:
-    monkeypatch.setattr(cli, "get_package_info", lambda package: _pkg_info())
+    monkeypatch.setattr(api, "get_package_info", lambda package: _pkg_info())
     monkeypatch.setattr(
-        cli,
+        api,
         "select_assess_mode",
         lambda package, **kwargs: ("check", "1.0", "1.1"),
     )
     monkeypatch.setattr(
-        cli,
+        api,
         "check_package",
         lambda *args, **kwargs: (_ for _ in ()).throw(cli.ScanSkipped("did not scan")),
     )
@@ -291,7 +291,7 @@ def test_assess_json_error_on_404_goes_to_stderr(monkeypatch, capsys) -> None:
     def _raise_404(package: str) -> dict:
         raise requests.HTTPError(response=response)
 
-    monkeypatch.setattr(cli, "get_package_info", _raise_404)
+    monkeypatch.setattr(api, "get_package_info", _raise_404)
 
     assert cli.cmd_assess(_args(package="nope", as_json=True)) == 1
     captured = capsys.readouterr()
@@ -305,9 +305,9 @@ def test_assess_json_error_on_404_goes_to_stderr(monkeypatch, capsys) -> None:
 def test_assess_json_error_on_only_one_version_goes_to_stderr(
     monkeypatch, capsys
 ) -> None:
-    monkeypatch.setattr(cli, "get_package_info", lambda package: _pkg_info())
+    monkeypatch.setattr(api, "get_package_info", lambda package: _pkg_info())
     monkeypatch.setattr(
-        cli,
+        api,
         "select_assess_mode",
         lambda package, **kwargs: ("inspect", None, ""),
     )

@@ -11,6 +11,32 @@ uv sync
 scripts/poll_updates.py --include-first --interval 5 | xargs -n1 -P4 brumby assess
 ```
 
+## Library API
+
+Use `brumby.api` to run the same operations as the CLI without parsing terminal
+output. Each operation accepts a loaded config dict and returns a result object:
+
+```python
+import tomllib
+
+from brumby import api
+
+with open("brumby.toml", "rb") as config_file:
+    config = tomllib.load(config_file)
+
+result = api.check("example-package", config=config)
+for difference in result.diffs:
+    print(difference)
+```
+
+Pass `config=None` to use built-in defaults. Unlike the CLI, the library API does
+not search for a config file; callers that need non-default settings should load
+and pass them explicitly.
+
+Only the names listed in `brumby.api.__all__` carry a compatibility guarantee.
+Every other module and package-root convenience import is an implementation detail
+and may change without notice.
+
 ## Test
 
 ```bash

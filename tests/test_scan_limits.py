@@ -1,5 +1,5 @@
 from brumby.analyze import ScanSkipped, prepare_scan_artifacts
-from brumby import cli
+from brumby import api, cli
 
 
 class _Artifact:
@@ -85,17 +85,17 @@ def test_prepare_scan_artifacts_skips_when_selected_total_exceeds_limit() -> Non
 
 def test_assess_reports_did_not_scan(monkeypatch, capsys) -> None:
     monkeypatch.setattr(
-        cli,
+        api,
         "get_package_info",
         lambda package: {"info": {"version": "1.0"}, "releases": {}},
     )
     monkeypatch.setattr(
-        cli,
+        api,
         "select_assess_mode",
         lambda package, **kwargs: ("check", "0.9", "1.0"),
     )
     monkeypatch.setattr(
-        cli,
+        api,
         "check_package",
         lambda *args, **kwargs: (_ for _ in ()).throw(ScanSkipped("did not scan")),
     )

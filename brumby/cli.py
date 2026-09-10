@@ -1,37 +1,19 @@
 import argparse
-import datetime
 import json
-import subprocess
 import sys
-import tarfile
 from pathlib import Path
 from typing import Any
 
 import keke
 import requests
 
-from .analyze import (
-    analyze_artifacts,
-    analyze_release,
-    check_artifacts,
-    check_package,
-    check_urls,
-    get_artifacts,
-    resolve_versions,
-    select_assess_mode,
-    ScanSkipped,
-)
-from .artifact import ArtifactView, make_local_artifact
-from .config import get_settings, get_thresholds, is_enabled, load_config
-from . import network
-from .pypi import get_latest_version, get_package_info, release_upload_bounds, validate_version
+from . import api
+from .config import load_config
 from .registry import get_finders
 
 
 def _load_config(args: argparse.Namespace) -> dict:
-    config = load_config(Path(args.config) if args.config else None)
-    network.configure(config)
-    return config
+    return load_config(Path(args.config) if args.config else None)
 
 
 def _fmt_vals(vals: frozenset[Any]) -> str:
@@ -49,15 +31,13 @@ def _fmt_source_set(sources: frozenset[str | None]) -> str:
     return f" [{', '.join(items)}]"
 
 
-def _fmt_release_version(version: str, bounds: tuple[datetime.datetime | None, datetime.datetime | None]) -> str:
-    oldest, _newest = bounds
+def _fmt_release_ref(ref: api.ReleaseRef) -> str:
+    if ref.version is None:
+        return "(none)"
+    oldest, _newest = ref.upload_bounds
     if oldest is None:
-        return f"{version} (base: unknown)"
-    return f"{version} (base: {oldest.date().isoformat()})"
-
-
-def _looks_like_url(s: str) -> bool:
-    return s.startswith("http://") or s.startswith("https://")
+        return f"{ref.version} (base: unknown)"
+    return f"{ref.version} (base: {oldest.date().isoformat()})"
 
 
 def _is_404_http_error(exc: BaseException) -> bool:
@@ -71,13 +51,6 @@ def _add_version_flags(parser: argparse.ArgumentParser) -> None:
                         help="Newer version (auto-detected if omitted); without --stable, the "
                              "baseline is resolved from this version's upload time rather than "
                              "the current time")
-
-
-def _validate_supplied_versions(*versions: str) -> None:
-    """Validate any user-supplied version strings, skipping empty (auto-detect) ones."""
-    for version in versions:
-        if version:
-            validate_version(version)
 
 
 def _inspect_lines(findings, summary: bool = False) -> list[str]:
@@ -110,20 +83,6 @@ def _inspect_lines(findings, summary: bool = False) -> list[str]:
     return lines
 
 
-def _run_finder_by_name(artifact, config: dict, name: str, content: bool) -> list:
-    specs = [s for s in get_finders(scope="artifact") if s.name == name]
-    if not specs:
-        raise ValueError(f"unknown artifact finder: {name}")
-    spec = specs[0]
-    if not (content or not spec.needs_content):
-        return []
-    view = ArtifactView(artifact)
-    try:
-        return spec.fn(view, get_settings(config, spec.name))
-    finally:
-        view.close()
-
-
 def _default_callback(
     package: str, old_ver: str, new_ver: str,
     name: str, resource: str | None, old_vals: frozenset, new_vals: frozenset,
@@ -154,169 +113,41 @@ def _default_callback(
         )
 
 
-def _risk_from_diffs(diffs: list[tuple], config: dict) -> str:
-    sus_threshold, informational_threshold = get_thresholds(config)
-    sketchy_count = sum(1 for diff in diffs if diff[6] == "sketchy")
-    informational_count = sum(1 for diff in diffs if diff[6] == "informational")
-    high = sketchy_count >= sus_threshold and informational_count >= informational_threshold
-    return "high" if high else "average"
-
-
-def _risk_from_findings(findings, config: dict) -> str:
-    sus_threshold, informational_threshold = get_thresholds(config)
-    kinds = {spec.name: spec.kind for spec in get_finders()}
-    sketchy_count = sum(1 for f in findings if kinds.get(f.name, "informational") == "sketchy")
-    informational_count = sum(1 for f in findings if kinds.get(f.name, "informational") == "informational")
-    high = sketchy_count >= sus_threshold and informational_count >= informational_threshold
-    return "high" if high else "average"
-
-
-_EXPORT_PROMPT = """\
-This directory contains two extracted PyPI release source trees for comparison.
-
-  old/       {old}
-  new/       {new}
-  diff.txt   unified diff between old/ and new/ (diff -ruN old new)
-
-Review diff.txt together with the full source trees in old/ and new/ for signs of
-malicious or suspicious behavior introduced in the new release: exfiltration,
-obfuscation, unexpected network/filesystem/process access, credential harvesting,
-or other supply-chain tampering.
-
-Output format (exactly):
-  - First line: a single integer from 0 to 100 rating how malicious this change
-    appears (0 = clearly benign, 100 = clearly malicious).
-  - Last line: the literal text DONE
-"""
-
-
-def _pick_export_artifact(artifacts: list) -> Any:
-    for artifact in artifacts:
-        if artifact.filetype == "sdist":
-            return artifact
-    return artifacts[0]
-
-
-def _open_archive(artifact: Any):
-    try:
-        return artifact.open_local()
-    except ValueError:
-        pass
-    if artifact.filetype == "sdist":
-        return artifact.open_sdist_remote()
-    return artifact.open_zip_remote()
-
-
-def _common_top_level(names: list[str]) -> str | None:
-    """Return the shared top-level path component if every entry has one, else None."""
-    tops = {name.split("/", 1)[0] for name in names if name.strip("/")}
-    if len(tops) == 1:
-        return next(iter(tops))
-    return None
-
-
-def _safe_member_target(dest: Path, name: str) -> Path:
-    dest_resolved = dest.resolve()
-    target = (dest / name).resolve()
-    if target != dest_resolved and dest_resolved not in target.parents:
-        raise ValueError(f"unsafe path in archive member: {name}")
-    return target
-
-
-def _extract_artifact_to(artifact: Any, dest: Path) -> None:
-    dest.mkdir(parents=True, exist_ok=True)
-    archive = _open_archive(artifact)
-    try:
-        if isinstance(archive, tarfile.TarFile):
-            members = archive.getmembers()
-            strip = _common_top_level([m.name for m in members])
-            if strip is not None:
-                prefix = strip + "/"
-                for m in members:
-                    m.name = m.name[len(prefix):] if m.name.startswith(prefix) else ""
-                members = [m for m in members if m.name]
-            archive.extractall(dest, members=members, filter="data")
-        else:
-            names = archive.namelist()
-            strip = _common_top_level(names)
-            prefix = (strip + "/") if strip is not None else ""
-            for info in archive.infolist():
-                relative = info.filename[len(prefix):] if info.filename.startswith(prefix) else info.filename
-                if not relative:
-                    continue
-                target = _safe_member_target(dest, relative)
-                if info.is_dir():
-                    target.mkdir(parents=True, exist_ok=True)
-                    continue
-                target.parent.mkdir(parents=True, exist_ok=True)
-                with archive.open(info) as src, open(target, "wb") as out:
-                    out.write(src.read())
-    finally:
-        archive.close()
-
-
 def cmd_export(args: argparse.Namespace) -> int:
-    _load_config(args)
-    old_path = Path(args.package)
-    new_path = Path(args.other) if args.other else None
-    output = Path(args.output) if args.output else Path(f"brumby-export-{old_path.stem}")
     try:
-        if old_path.is_file() and new_path is not None and new_path.is_file():
-            old_artifact = make_local_artifact(old_path)
-            new_artifact = make_local_artifact(new_path)
-            old_label, new_label = str(old_path), str(new_path)
-        else:
-            _validate_supplied_versions(args.stable, args.new)
-            pkg_info = get_package_info(args.package)
-            stable, new = resolve_versions(
-                args.package,
-                cutoff_hours=args.cutoff,
-                stable_version=args.stable or None,
-                new_version=args.new or None,
-                last_two=args.last_two,
-                last=args.last,
-                pkg_info=pkg_info,
-            )
-            if not stable:
-                print(f"error: No previous version found for {args.package}", file=sys.stderr)
-                return 1
-            if not new or stable == new:
-                print(f"error: Only one version found for {args.package}", file=sys.stderr)
-                return 1
-            old_artifacts = get_artifacts(args.package, stable, pkg_info=pkg_info, save_dir=args.save_artifacts or None)
-            new_artifacts = get_artifacts(args.package, new, pkg_info=pkg_info, save_dir=args.save_artifacts or None)
-            old_artifact = _pick_export_artifact(old_artifacts)
-            new_artifact = _pick_export_artifact(new_artifacts)
-            old_label, new_label = f"{args.package} {stable}", f"{args.package} {new}"
-    except ScanSkipped as e:
-        print(f"{args.package}: {e}")
+        result = api.export(
+            args.package, args.other or None,
+            stable_version=getattr(args, "stable", "") or None,
+            new_version=getattr(args, "new", "") or None,
+            cutoff_hours=getattr(args, "cutoff", 24),
+            last_two=getattr(args, "last_two", False), last=getattr(args, "last", False),
+            output=args.output or None, save_dir=getattr(args, "save_artifacts", "") or None,
+            config=_load_config(args),
+        )
+    except ScanSkipped as exc:
+        print(f"{args.package}: {exc}")
         return 0
-    except requests.HTTPError as e:
-        if _is_404_http_error(e):
+    except requests.HTTPError as exc:
+        if _is_404_http_error(exc):
             print(f"error: {args.package} not found (HTTP 404)", file=sys.stderr)
             return 1
         raise
-    except ValueError as e:
-        print(f"error: {e}", file=sys.stderr)
+    except ValueError as exc:
+        print(f"error: {exc}", file=sys.stderr)
         return 1
 
-    old_dir = output / "old"
-    new_dir = output / "new"
-    _extract_artifact_to(old_artifact, old_dir)
-    _extract_artifact_to(new_artifact, new_dir)
-
-    diff_result = subprocess.run(
-        ["diff", "-ruN", "old", "new"], cwd=output, capture_output=True, text=True,
-    )
-    (output / "diff.txt").write_text(diff_result.stdout)
-    (output / "PROMPT.md").write_text(_EXPORT_PROMPT.format(old=old_label, new=new_label))
-
-    print(f"Exported to {output}")
-    print(f"  old:    {old_label}  -> old/")
-    print(f"  new:    {new_label}  -> new/")
+    print(f"Exported to {result.output}")
+    print(f"  old:    {result.old.label}  -> old/")
+    print(f"  new:    {result.new.label}  -> new/")
     print("  diff:   diff.txt")
     print("  prompt: PROMPT.md")
     return 0
+
+
+# Kept for callers that used the old CLI helpers; classification now belongs to the API.
+ScanSkipped = api.ScanSkipped
+_risk_from_diffs = api.classify_diffs
+_risk_from_findings = api.classify_findings
 
 
 def _assess_line(project: str, risk: str) -> str:
@@ -346,247 +177,110 @@ def _assess_error(project: str, message: str, as_json: bool) -> None:
 
 
 def cmd_check(args: argparse.Namespace) -> int:
-    config = _load_config(args)
-    old_path = Path(args.package)
-    new_path = Path(args.other) if args.other else None
     try:
-        if args.other and _looks_like_url(args.package) and _looks_like_url(args.other):
-            package_label = "url compare"
-            print("URL compare:")
-            print(f"  old: {args.package}")
-            print(f"  new: {args.other}")
-            _stable_findings, _new_findings, diffs = check_urls(
-                args.package,
-                args.other,
-                callback=_default_callback,
-                config=config,
-                content=not args.fast,
-            )
-        elif old_path.is_file() and new_path is not None and new_path.is_file():
-            old_artifact = make_local_artifact(old_path)
-            new_artifact = make_local_artifact(new_path)
-            package_label = "local compare"
-            print("Local compare:")
-            print(f"  old: {old_path}")
-            print(f"  new: {new_path}")
-            _stable_findings, _new_findings, diffs = check_artifacts(
-                [old_artifact],
-                [new_artifact],
-                old_label=str(old_path),
-                new_label=str(new_path),
-                callback=_default_callback,
-                config=config,
-                content=not args.fast,
-            )
-        else:
-            _validate_supplied_versions(args.stable, args.new)
-            pkg_info = get_package_info(args.package)
-            package_label = args.package
-            stable, new = resolve_versions(
-                args.package,
-                cutoff_hours=args.cutoff,
-                stable_version=args.stable or None,
-                new_version=args.new or None,
-                last_two=args.last_two,
-                last=args.last,
-                pkg_info=pkg_info,
-            )
-
-            if args.list_only:
-                print(f"Package: {args.package}")
-                print(
-                    "  stable: "
-                    + (
-                        _fmt_release_version(stable, release_upload_bounds(pkg_info, stable))
-                        if stable
-                        else "(none)"
-                    )
-                )
-                print(
-                    "  new:    "
-                    + (
-                        _fmt_release_version(new, release_upload_bounds(pkg_info, new))
-                        if new
-                        else "(none)"
-                    )
-                )
-                return 0
-
-            if not stable:
-                print(f"error: No previous version found for {args.package}", file=sys.stderr)
-                return 1
-            if not new:
-                print(f"error: Only one version found for {args.package}", file=sys.stderr)
-                return 1
-            if stable == new:
-                print(f"error: Only one version found for {args.package}", file=sys.stderr)
-                return 1
-
-            print(f"Package: {args.package}")
-            print(f"  stable: {_fmt_release_version(stable, release_upload_bounds(pkg_info, stable))}")
-            print(f"  new:    {_fmt_release_version(new, release_upload_bounds(pkg_info, new))}")
-
-            _stable_findings, _new_findings, diffs = check_package(
-                args.package,
-                cutoff_hours=args.cutoff,
-                stable_version=stable,
-                new_version=new,
-                callback=_default_callback,
-                config=config,
-                content=not args.fast,
-                last_two=args.last_two,
-                last=args.last,
-                pkg_info=pkg_info,
-                save_dir=args.save_artifacts or None,
-            )
-            package_label = args.package
+        result = api.check(
+            args.package, args.other or None,
+            stable_version=args.stable or None, new_version=args.new or None,
+            cutoff_hours=args.cutoff, last_two=args.last_two, last=args.last,
+            list_only=args.list_only, content=not args.fast,
+            save_dir=args.save_artifacts or None, config=_load_config(args),
+        )
     except ScanSkipped:
-        print(f"{package_label if 'package_label' in locals() else args.package}: did not scan")
+        print(f"{args.package}: did not scan")
         return 0
-    except requests.HTTPError as e:
-        if getattr(e.response, "status_code", None) == 404:
+    except requests.HTTPError as exc:
+        if _is_404_http_error(exc):
             print(f"error: {args.package} not found (HTTP 404)", file=sys.stderr)
             return 1
         raise
-    except ValueError as e:
-        print(f"error: {e}", file=sys.stderr)
+    except ValueError as exc:
+        print(f"error: {exc}", file=sys.stderr)
         return 1
 
-    added = sum(len(new_vals - old_vals) for _, _, old_vals, new_vals, *_ in diffs)
-    removed = sum(len(old_vals - new_vals) for _, _, old_vals, new_vals, *_ in diffs)
-    delta = added - removed
-    if diffs:
-        print(f"\n{package_label}: {len(diffs)} difference(s) found")
-        print(f"delta: {delta:+d} (add={added} remove={removed})")
-        return 2
-    print(f"{package_label}: no differences found")
-    print(f"delta: {delta:+d} (add={added} remove={removed})")
-    return 0
+    if result.source == "package":
+        print(f"Package: {result.label}")
+        print(f"  stable: {_fmt_release_ref(result.old)}")
+        print(f"  new:    {_fmt_release_ref(result.new)}")
+    else:
+        heading = "URL compare" if result.source == "url" else "Local compare"
+        print(f"{heading}:")
+        print(f"  old: {result.old.label}")
+        print(f"  new: {result.new.label}")
+    if result.list_only:
+        return 0
+    for diff in result.diffs:
+        _default_callback(
+            result.label, result.old.label, result.new.label,
+            diff.name, diff.resource, diff.old_values, diff.new_values,
+            diff.old_sources, diff.new_sources, diff.kind,
+        )
+    if result.diffs:
+        print(f"\n{result.label}: {len(result.diffs)} difference(s) found")
+    else:
+        print(f"{result.label}: no differences found")
+    print(f"delta: {result.delta:+d} (add={result.added} remove={result.removed})")
+    return 2 if result.diffs else 0
 
 
 def cmd_assess(args: argparse.Namespace) -> int:
-    config = _load_config(args)
-    local_path = Path(args.package)
-    as_json = args.json
     try:
-        if local_path.is_file():
-            if args.stable or args.new:
-                raise ValueError("--stable and --new cannot be used with a local artifact path")
-            project = local_path.name
-            artifact = make_local_artifact(local_path)
-            findings = analyze_artifacts([artifact], config, content=not args.fast)
-            risk = _risk_from_findings(findings, config)
-        else:
-            _validate_supplied_versions(args.stable, args.new)
-            pkg_info = get_package_info(args.package)
-            project = args.package
-            mode, stable, new = select_assess_mode(
-                args.package,
-                cutoff_hours=args.cutoff,
-                pkg_info=pkg_info,
-                stable_version=args.stable or None,
-                new_version=args.new or None,
-            )
-            if mode in ("first-release", "too-new"):
-                risk = "too new"
-            elif mode == "inspect":
-                version = new
-                if not version:
-                    _assess_error(project, f"Only one version found for {args.package}", as_json)
-                    return 1
-                artifacts = get_artifacts(args.package, version, pkg_info=pkg_info, save_dir=args.save_artifacts or None)
-                findings = analyze_release(artifacts, pkg_info, version, config, content=not args.fast)
-                risk = _risk_from_findings(findings, config)
-            else:
-                if not stable or not new:
-                    _assess_error(project, f"Only one version found for {args.package}", as_json)
-                    return 1
-                _stable_findings, _new_findings, diffs = check_package(
-                    args.package,
-                    cutoff_hours=args.cutoff,
-                    stable_version=stable,
-                    new_version=new,
-                    callback=None,
-                    config=config,
-                    content=not args.fast,
-                    last_two=(mode == "check-last"),
-                    last=(mode == "check-last"),
-                    pkg_info=pkg_info,
-                    save_dir=args.save_artifacts or None,
-                )
-                risk = _risk_from_diffs(diffs, config)
+        result = api.assess(
+            args.package, stable_version=args.stable or None, new_version=args.new or None,
+            cutoff_hours=args.cutoff, content=not args.fast,
+            save_dir=args.save_artifacts or None, config=_load_config(args),
+        )
     except ScanSkipped:
-        _assess_emit(project if 'project' in locals() else args.package, "did not scan", as_json)
+        project = Path(args.package).name if Path(args.package).is_file() else args.package
+        _assess_emit(project, "did not scan", args.json)
         return 0
-    except requests.HTTPError as e:
-        if getattr(e.response, "status_code", None) == 404:
-            _assess_error(args.package, f"{args.package} not found (HTTP 404)", as_json)
+    except requests.HTTPError as exc:
+        if _is_404_http_error(exc):
+            _assess_error(args.package, f"{args.package} not found (HTTP 404)", args.json)
             return 1
         raise
-    except ValueError as e:
-        _assess_error(project if 'project' in locals() else args.package, str(e), as_json)
+    except ValueError as exc:
+        _assess_error(args.package, str(exc), args.json)
         return 1
-
-    _assess_emit(project, risk, as_json)
+    _assess_emit(result.project, result.risk, args.json)
     return 0
 
 
 def cmd_inspect(args: argparse.Namespace) -> int:
     try:
-        config = _load_config(args)
-        local_path = Path(args.package)
-        if local_path.exists() and local_path.is_file():
-            label = str(local_path)
-            artifact = make_local_artifact(local_path)
-            if args.finder:
-                findings = _run_finder_by_name(artifact, config, args.finder, content=not args.fast)
-            else:
-                findings = analyze_artifacts([artifact], config, content=not args.fast)
-        else:
-            _validate_supplied_versions(args.version)
-            version = args.version or get_latest_version(args.package)
-            pkg_info = get_package_info(args.package)
-            label = f"{args.package} {version}"
-            artifacts = get_artifacts(args.package, version, pkg_info=pkg_info, save_dir=args.save_artifacts or None)
-            if args.finder:
-                findings = []
-                for artifact in artifacts:
-                    findings.extend(_run_finder_by_name(artifact, config, args.finder, content=not args.fast))
-            else:
-                findings = analyze_release(artifacts, pkg_info, version, config, content=not args.fast)
+        result = api.inspect(
+            args.package, args.version or None, finder=args.finder or None,
+            content=not args.fast, save_dir=args.save_artifacts or None,
+            config=_load_config(args),
+        )
     except ScanSkipped:
-        print(f"{label if 'label' in locals() else args.package}: did not scan")
+        print(f"{args.package}: did not scan")
         return 0
-    except requests.HTTPError as e:
-        if getattr(e.response, "status_code", None) == 404:
-            if args.finder:
-                print(f"error: {args.package} not found (HTTP 404)", file=sys.stderr)
-                return 0
+    except requests.HTTPError as exc:
+        if _is_404_http_error(exc):
             print(f"error: {args.package} not found (HTTP 404)", file=sys.stderr)
-            return 1
+            return 0 if args.finder else 1
         raise
-    except ValueError as e:
-        print(f"error: {e}", file=sys.stderr)
+    except ValueError as exc:
+        print(f"error: {exc}", file=sys.stderr)
         return 1
-    if not findings:
-        print(f"{label}: no findings")
+    if not result.findings:
+        print(f"{result.label}: no findings")
         return 0
-    print(f"{label}:")
-    for line in _inspect_lines(findings, summary=args.summary):
+    print(f"{result.label}:")
+    for line in _inspect_lines(result.findings, summary=args.summary):
         print(line)
     return 1 if args.finder else 0
 
 
 def cmd_list_finders(args: argparse.Namespace) -> int:
-    config = _load_config(args)
+    items = api.finders(config=_load_config(args))
     print(f"{'NAME':<35} {'SCOPE':<12} {'KIND':<14} {'CONTENT':<8} {'ON':<4} DESCRIPTION")
     print("-" * 110)
-    for spec in get_finders():
-        enabled = is_enabled(config, spec.name, spec.default_enabled)
+    for item in items:
         print(
-            f"{spec.name:<35} {spec.scope:<12} {spec.kind:<14} "
-            f"{'yes' if spec.needs_content else 'no':<8} "
-            f"{'y' if enabled else 'N':<4} {spec.description}"
+            f"{item.name:<35} {item.scope:<12} {item.kind:<14} "
+            f"{'yes' if item.needs_content else 'no':<8} "
+            f"{'y' if item.enabled else 'N':<4} {item.description}"
         )
     return 0
 

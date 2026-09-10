@@ -201,11 +201,11 @@ def test_inspect_single_finder_404_exits_zero() -> None:
             super().__init__("404")
             self.response = _Resp()
 
-    from brumby import cli
+    from brumby import api, cli
 
-    orig_get_latest_version = cli.get_latest_version
+    orig_get_latest_version = api.get_latest_version
     try:
-        cli.get_latest_version = lambda package: (_ for _ in ()).throw(_Err())
+        api.get_latest_version = lambda package: (_ for _ in ()).throw(_Err())
         args = type("Args", (), {
             "config": "",
             "package": "missing-pkg",
@@ -217,11 +217,11 @@ def test_inspect_single_finder_404_exits_zero() -> None:
         })()
         assert cli.cmd_inspect(args) == 0
     finally:
-        cli.get_latest_version = orig_get_latest_version
+        api.get_latest_version = orig_get_latest_version
 
 
 def test_inspect_single_finder_works_for_remote_package_version() -> None:
-    from brumby import cli
+    from brumby import api, cli
 
     with tempfile.TemporaryDirectory() as tmpdir:
         path = Path(tmpdir) / "demo-1.0-py3-none-any.whl"
@@ -229,13 +229,13 @@ def test_inspect_single_finder_works_for_remote_package_version() -> None:
             zf.writestr("demo/proxy.py", b"import base64\n")
 
         artifact = make_local_artifact(path)
-        orig_get_latest_version = cli.get_latest_version
-        orig_get_package_info = cli.get_package_info
-        orig_get_artifacts = cli.get_artifacts
+        orig_get_latest_version = api.get_latest_version
+        orig_get_package_info = api.get_package_info
+        orig_get_artifacts = api.get_artifacts
         try:
-            cli.get_latest_version = lambda package: "1.0"
-            cli.get_package_info = lambda package: {"releases": {"1.0": []}}
-            cli.get_artifacts = lambda package, version, pkg_info=None, save_dir=None: [artifact]
+            api.get_latest_version = lambda package: "1.0"
+            api.get_package_info = lambda package: {"releases": {"1.0": []}}
+            api.get_artifacts = lambda package, version, pkg_info=None, save_dir=None: [artifact]
             args = type("Args", (), {
                 "config": "",
                 "package": "demo",
@@ -247,6 +247,6 @@ def test_inspect_single_finder_works_for_remote_package_version() -> None:
             })()
             assert cmd_inspect(args) == 1
         finally:
-            cli.get_latest_version = orig_get_latest_version
-            cli.get_package_info = orig_get_package_info
-            cli.get_artifacts = orig_get_artifacts
+            api.get_latest_version = orig_get_latest_version
+            api.get_package_info = orig_get_package_info
+            api.get_artifacts = orig_get_artifacts
