@@ -4,7 +4,6 @@ from types import SimpleNamespace
 
 import pytest
 import requests
-
 from brumby import api, cli
 from brumby.finding import Finding
 

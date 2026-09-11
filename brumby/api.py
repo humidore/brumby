@@ -5,10 +5,10 @@ version selection, scanning, and risk decisions without capturing stdout or
 reconstructing command-line arguments.
 """
 
-from dataclasses import dataclass
 import datetime
-from pathlib import Path
 import tarfile
+from dataclasses import dataclass
+from pathlib import Path
 from typing import Any, Literal, cast
 
 import keke
@@ -29,7 +29,12 @@ from .artifact import ArtifactView, make_local_artifact
 from .compare import Diff
 from .config import get_settings, get_thresholds, is_enabled
 from .finding import Finding
-from .pypi import get_latest_version, get_package_info, release_upload_bounds, validate_version
+from .pypi import (
+    get_latest_version,
+    get_package_info,
+    release_upload_bounds,
+    validate_version,
+)
 from .registry import get_finders
 
 Risk = Literal["high", "average", "too new", "did not scan"]

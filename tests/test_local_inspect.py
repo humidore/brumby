@@ -3,9 +3,9 @@ import zipfile
 from pathlib import Path
 
 from brumby.analyze import analyze_artifacts, check_artifacts
+from brumby.artifact import make_local_artifact
 from brumby.cli import _inspect_lines
 from brumby.finding import Finding
-from brumby.artifact import make_local_artifact
 
 
 def test_local_artifact_infers_wheel_type() -> None:

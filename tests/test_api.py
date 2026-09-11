@@ -4,7 +4,6 @@ import zipfile
 from pathlib import Path
 
 import pytest
-
 from brumby import api
 from brumby.finding import Finding
 

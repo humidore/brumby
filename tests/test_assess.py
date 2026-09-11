@@ -2,7 +2,6 @@ import json
 
 import pytest
 import requests
-
 from brumby import api, cli
 
 
