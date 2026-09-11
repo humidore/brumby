@@ -1,28 +1,11 @@
 import json
 
+import pytest
 import requests
-
-from brumby import cli
-from brumby.finding import Finding
+from brumby import api, cli
 
 
-def _pkg_info() -> dict:
-    return {
-        "info": {"version": "1.1"},
-        "releases": {
-            "1.0": [{"upload_time_iso_8601": "2026-05-06T10:00:00+00:00"}],
-            "1.1": [{"upload_time_iso_8601": "2026-05-08T11:00:00+00:00"}],
-        },
-    }
-
-
-def _args(
-    package: str = "demo",
-    fast: bool = False,
-    as_json: bool = False,
-    stable: str = "",
-    new: str = "",
-) -> object:
+def _args(package: str = "demo", as_json: bool = False) -> object:
     return type(
         "Args",
         (),
@@ -30,292 +13,101 @@ def _args(
             "config": "",
             "package": package,
             "cutoff": 24,
-            "fast": fast,
+            "fast": False,
             "save_artifacts": "",
             "json": as_json,
-            "stable": stable,
-            "new": new,
+            "stable": "",
+            "new": "",
         },
     )()
 
 
-def _boom(*args, **kwargs):
-    raise AssertionError("this code path should not run")
+@pytest.mark.parametrize(
+    ("risk", "fragment"),
+    [
+        ("high", "\033[31mhigh risk\033[0m"),
+        ("average", "\033[32maverage risk\033[0m"),
+        ("too new", "\033[33mtoo new to evaluate\033[0m"),
+        ("did not scan", "did not scan"),
+    ],
+)
+def test_assess_formats_each_verdict(risk, fragment) -> None:
+    assert fragment in cli._assess_line("demo", risk)
 
 
-def test_assess_reports_too_new_for_first_release_without_scanning(
-    monkeypatch, capsys
-) -> None:
-    monkeypatch.setattr(
-        cli,
-        "get_package_info",
-        lambda package: {
-            "info": {"version": "1.0"},
-            "releases": {"1.0": [{"upload_time_iso_8601": "2026-05-08T11:00:00+00:00"}]},
-        },
-    )
-    monkeypatch.setattr(cli, "get_artifacts", _boom)
-    monkeypatch.setattr(cli, "check_package", _boom)
+def test_assess_passes_cli_options_and_prints_result(monkeypatch, capsys) -> None:
+    recorded = {}
+    config = {"thresholds": {"sus": 2}}
+    monkeypatch.setattr(cli, "load_config", lambda path: config)
 
-    assert cli.cmd_assess(_args()) == 0
-    assert capsys.readouterr().out == cli._assess_line("demo", "too new") + "\n"
-
-
-def test_assess_check_mode_is_high_risk_for_any_sketchy_diff_by_default(
-    monkeypatch, capsys
-) -> None:
-    monkeypatch.setattr(cli, "get_package_info", lambda package: _pkg_info())
-    monkeypatch.setattr(
-        cli,
-        "select_assess_mode",
-        lambda package, **kwargs: ("check", "1.0", "1.1"),
-    )
-    monkeypatch.setattr(
-        cli,
-        "check_package",
-        lambda *args, **kwargs: (
-            [],
-            [],
-            [
-                (
-                    "has_elf_binary",
-                    None,
-                    frozenset(),
-                    frozenset(),
-                    frozenset(),
-                    frozenset(),
-                    "sketchy",
-                ),
-            ],
-        ),
-    )
-
-    assert cli.cmd_assess(_args()) == 0
-    out = capsys.readouterr().out
-    assert out == cli._assess_line("demo", "high") + "\n"
-
-
-def test_assess_check_mode_respects_configured_sus_threshold(
-    monkeypatch, capsys
-) -> None:
-    monkeypatch.setattr(cli, "get_package_info", lambda package: _pkg_info())
-    monkeypatch.setattr(
-        cli,
-        "select_assess_mode",
-        lambda package, **kwargs: ("check", "1.0", "1.1"),
-    )
-    monkeypatch.setattr(cli, "load_config", lambda path: {"thresholds": {"sus": 2}})
-    monkeypatch.setattr(
-        cli,
-        "check_package",
-        lambda *args, **kwargs: (
-            [],
-            [],
-            [
-                (
-                    "has_elf_binary",
-                    None,
-                    frozenset(),
-                    frozenset(),
-                    frozenset(),
-                    frozenset(),
-                    "sketchy",
-                ),
-            ],
-        ),
-    )
-
-    assert cli.cmd_assess(_args()) == 0
-    out = capsys.readouterr().out
-    assert out == cli._assess_line("demo", "average") + "\n"
-
-
-def test_assess_inspect_mode_is_high_risk_for_any_sketchy_finding(
-    monkeypatch, capsys
-) -> None:
-    monkeypatch.setattr(cli, "get_package_info", lambda package: _pkg_info())
-    monkeypatch.setattr(
-        cli,
-        "select_assess_mode",
-        lambda package, **kwargs: ("inspect", None, "1.1"),
-    )
-    monkeypatch.setattr(cli, "get_artifacts", lambda *args, **kwargs: [object()])
-    monkeypatch.setattr(
-        cli,
-        "analyze_release",
-        lambda *args, **kwargs: [
-            Finding("has_pth_file", True, "demo-1.1-py3-none-any.whl", "wheel"),
-            Finding("metadata_version", "2.4", "demo-1.1-py3-none-any.whl", "wheel"),
-        ],
-    )
-
-    assert cli.cmd_assess(_args()) == 0
-    out = capsys.readouterr().out
-    assert out == cli._assess_line("demo", "high") + "\n"
-
-
-def test_assess_uses_supplied_versions(monkeypatch, capsys) -> None:
-    recorded: dict = {}
-
-    def _fake_check_package(package, **kwargs):
+    def fake_assess(package, **kwargs):
+        recorded["package"] = package
         recorded.update(kwargs)
-        return ([], [], [])
+        return api.AssessResult(package, "average", "check", "1.0", "2.0")
 
-    monkeypatch.setattr(cli, "get_package_info", lambda package: _pkg_info())
-    monkeypatch.setattr(cli, "check_package", _fake_check_package)
+    monkeypatch.setattr(api, "assess", fake_assess)
+    args = _args()
+    args.stable = "1.0"
+    args.new = "2.0"
+    args.cutoff = 12
+    args.fast = True
+    args.save_artifacts = "saved"
 
-    assert cli.cmd_assess(_args(stable="1.0", new="1.1")) == 0
-    assert recorded["stable_version"] == "1.0"
-    assert recorded["new_version"] == "1.1"
+    assert cli.cmd_assess(args) == 0
     assert capsys.readouterr().out == cli._assess_line("demo", "average") + "\n"
+    assert recorded == {
+        "package": "demo",
+        "stable_version": "1.0",
+        "new_version": "2.0",
+        "cutoff_hours": 12,
+        "content": False,
+        "save_dir": "saved",
+        "config": config,
+    }
 
 
-def test_assess_supplied_new_resolves_stable_from_its_release_time(monkeypatch) -> None:
-    recorded: dict = {}
-
-    def _fake_check_package(package, **kwargs):
-        recorded.update(kwargs)
-        return ([], [], [])
-
-    monkeypatch.setattr(cli, "get_package_info", lambda package: _pkg_info())
-    monkeypatch.setattr(cli, "check_package", _fake_check_package)
-
-    assert cli.cmd_assess(_args(new="1.1")) == 0
-    assert recorded["stable_version"] == "1.0"
-    assert recorded["new_version"] == "1.1"
-
-
-def test_assess_supplied_new_without_baseline_falls_back_to_inspect(monkeypatch) -> None:
-    recorded: dict = {}
-
-    def _fake_get_artifacts(package, version, **kwargs):
-        recorded["version"] = version
-        return [object()]
-
-    monkeypatch.setattr(cli, "get_package_info", lambda package: _pkg_info())
-    monkeypatch.setattr(cli, "check_package", _boom)
-    monkeypatch.setattr(cli, "get_artifacts", _fake_get_artifacts)
-    monkeypatch.setattr(cli, "analyze_release", lambda *args, **kwargs: [])
-
-    assert cli.cmd_assess(_args(new="1.0")) == 0
-    assert recorded["version"] == "1.0"
-
-
-def test_assess_rejects_supplied_versions_for_local_artifact(tmp_path, capsys) -> None:
-    artifact = tmp_path / "demo-1.0.tar.gz"
-    artifact.touch()
-
-    assert cli.cmd_assess(_args(package=str(artifact), new="1.1")) == 1
-    captured = capsys.readouterr()
-    assert captured.out == ""
-    assert "local artifact" in captured.err
-
-
-def test_assess_rejects_invalid_supplied_version(monkeypatch, capsys) -> None:
-    monkeypatch.setattr(cli, "get_package_info", lambda package: _pkg_info())
-
-    assert cli.cmd_assess(_args(new="not a version")) == 1
-    captured = capsys.readouterr()
-    assert captured.out == ""
-    assert "invalid version" in captured.err
-
-
-def test_assess_json_emits_project_and_risk(monkeypatch, capsys) -> None:
-    monkeypatch.setattr(cli, "get_package_info", lambda package: _pkg_info())
+def test_assess_json_prints_structured_result(monkeypatch, capsys) -> None:
     monkeypatch.setattr(
-        cli,
-        "select_assess_mode",
-        lambda package, **kwargs: ("check", "1.0", "1.1"),
-    )
-    monkeypatch.setattr(cli, "check_package", lambda *args, **kwargs: ([], [], []))
-
-    assert cli.cmd_assess(_args(as_json=True)) == 0
-    out = capsys.readouterr().out
-    assert json.loads(out) == {"project": "demo", "risk": "average"}
-
-
-def test_assess_json_high_risk_exits_0(monkeypatch, capsys) -> None:
-    monkeypatch.setattr(cli, "get_package_info", lambda package: _pkg_info())
-    monkeypatch.setattr(
-        cli,
-        "select_assess_mode",
-        lambda package, **kwargs: ("check", "1.0", "1.1"),
-    )
-    monkeypatch.setattr(
-        cli,
-        "check_package",
-        lambda *args, **kwargs: (
-            [],
-            [],
-            [
-                (
-                    "has_elf_binary",
-                    None,
-                    frozenset(),
-                    frozenset(),
-                    frozenset(),
-                    frozenset(),
-                    "sketchy",
-                ),
-            ],
-        ),
+        api, "assess", lambda *args, **kwargs: api.AssessResult("demo", "high", "check")
     )
 
     assert cli.cmd_assess(_args(as_json=True)) == 0
-    out = capsys.readouterr().out
-    assert json.loads(out) == {"project": "demo", "risk": "high"}
+    assert json.loads(capsys.readouterr().out) == {"project": "demo", "risk": "high"}
 
 
-def test_assess_json_did_not_scan(monkeypatch, capsys) -> None:
-    monkeypatch.setattr(cli, "get_package_info", lambda package: _pkg_info())
+def test_assess_scan_skip_is_not_an_error(monkeypatch, capsys) -> None:
     monkeypatch.setattr(
-        cli,
-        "select_assess_mode",
-        lambda package, **kwargs: ("check", "1.0", "1.1"),
-    )
-    monkeypatch.setattr(
-        cli,
-        "check_package",
-        lambda *args, **kwargs: (_ for _ in ()).throw(cli.ScanSkipped("did not scan")),
+        api, "assess", lambda *args, **kwargs: (_ for _ in ()).throw(api.ScanSkipped("large"))
     )
 
     assert cli.cmd_assess(_args(as_json=True)) == 0
-    out = capsys.readouterr().out
-    assert json.loads(out) == {"project": "demo", "risk": "did not scan"}
+    assert json.loads(capsys.readouterr().out) == {"project": "demo", "risk": "did not scan"}
 
 
-def test_assess_json_error_on_404_goes_to_stderr(monkeypatch, capsys) -> None:
+def test_assess_404_is_a_json_error(monkeypatch, capsys) -> None:
     response = requests.Response()
     response.status_code = 404
-
-    def _raise_404(package: str) -> dict:
-        raise requests.HTTPError(response=response)
-
-    monkeypatch.setattr(cli, "get_package_info", _raise_404)
-
-    assert cli.cmd_assess(_args(package="nope", as_json=True)) == 1
-    captured = capsys.readouterr()
-    assert captured.out == ""
-    assert json.loads(captured.err) == {
-        "project": "nope",
-        "error": "nope not found (HTTP 404)",
-    }
-
-
-def test_assess_json_error_on_only_one_version_goes_to_stderr(
-    monkeypatch, capsys
-) -> None:
-    monkeypatch.setattr(cli, "get_package_info", lambda package: _pkg_info())
     monkeypatch.setattr(
-        cli,
-        "select_assess_mode",
-        lambda package, **kwargs: ("inspect", None, ""),
+        api,
+        "assess",
+        lambda *args, **kwargs: (_ for _ in ()).throw(requests.HTTPError(response=response)),
     )
 
-    assert cli.cmd_assess(_args(as_json=True)) == 1
+    assert cli.cmd_assess(_args(package="missing", as_json=True)) == 1
     captured = capsys.readouterr()
     assert captured.out == ""
     assert json.loads(captured.err) == {
-        "project": "demo",
-        "error": "Only one version found for demo",
+        "project": "missing",
+        "error": "missing not found (HTTP 404)",
     }
+
+
+def test_assess_value_error_goes_to_stderr(monkeypatch, capsys) -> None:
+    monkeypatch.setattr(
+        api, "assess", lambda *args, **kwargs: (_ for _ in ()).throw(ValueError("bad input"))
+    )
+
+    assert cli.cmd_assess(_args()) == 1
+    captured = capsys.readouterr()
+    assert captured.out == ""
+    assert captured.err == "error: bad input\n"

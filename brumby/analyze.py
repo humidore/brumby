@@ -2,7 +2,9 @@ import datetime
 
 import keke
 
-from . import finders as _finders_pkg  # noqa: F401  # ensures all finders are registered
+from . import (
+    finders as _finders_pkg,  # noqa: F401  # ensures all finders are registered
+)
 from .artifact import Artifact, ArtifactView, make_artifact, make_url_artifact
 from .compare import DiffCallback, compare_releases
 from .config import get_settings, is_enabled, load_config
@@ -139,8 +141,8 @@ def save_release_info(
     version: str,
     pkg_info: dict,
 ) -> None:
-    from pathlib import Path
     import json
+    from pathlib import Path
 
     target = Path(save_dir) / package / version
     target.mkdir(parents=True, exist_ok=True)

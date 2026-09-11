@@ -1,5 +1,4 @@
 import pytest
-
 from brumby.pypi import validate_version
 
 

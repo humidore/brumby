@@ -21,7 +21,6 @@ import json
 from pathlib import Path
 
 import pytest
-
 from brumby.analyze import check_artifacts
 from brumby.artifact import make_local_artifact
 from brumby.cli import _risk_from_diffs

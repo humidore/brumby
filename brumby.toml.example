@@ -57,9 +57,13 @@
 # [finders.protonmail_account]
 # domains = ["protonmail.com", "pm.me"]  # additional suspicious domains
 
+# assess rates change, not safety: "average" means no worse than yesterday's
+# baseline; "high" means plausibly worse. There is no "low" because finding no
+# regression does not prove either release safe. "too new" means no baseline was
+# available; conservative callers should treat it like "high".
 # [thresholds]
-# sus = 1             # min sketchy findings for "assess" to report high risk (default: 1)
-# informational = 0   # min informational findings for "assess" to report high risk (default: 0)
+# sus = 1             # min changed sketchy findings for "high" (default: 1)
+# informational = 0   # min changed informational findings for "high" (default: 0)
 
 # Both default to no proxy and no rewriting -- plain unproxied internet access.
 # Configured separately since metadata (small PyPI JSON lookups) and artifacts
