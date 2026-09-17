@@ -2,7 +2,6 @@ import datetime
 
 import pytest
 import requests
-
 from brumby.analyze import find_last_with_cutoff, resolve_versions, select_assess_mode
 
 

@@ -5,7 +5,7 @@ from pathlib import Path
 
 from brumby.analyze import analyze_artifacts
 from brumby.artifact import make_local_artifact
-from brumby.finders.metadata import find_platform_wheels, find_giant_version
+from brumby.finders.metadata import find_giant_version, find_platform_wheels
 from brumby.finding import Finding
 
 
