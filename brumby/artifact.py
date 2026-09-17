@@ -23,13 +23,14 @@ class Artifact:
     _data: bytes | None = field(default=None, repr=False)
     _local_path: Path | None = field(default=None, repr=False)
 
-    @keke.ktrace("self.filename")
+    @keke.ktrace("self.filename", "self.url")
     def data(self) -> bytes:
         if self._data is None:
             url, proxies = network.prepare_request("artifacts", self.url)
-            resp = requests.get(url, timeout=120, proxies=proxies)
-            resp.raise_for_status()
-            self._data = resp.content
+            with keke.kev("download_artifact", url=url):
+                resp = requests.get(url, timeout=120, proxies=proxies)
+                resp.raise_for_status()
+                self._data = resp.content
         return self._data
 
     def open_zip_remote(self) -> zipfile.ZipFile:

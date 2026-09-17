@@ -1,4 +1,5 @@
 import datetime
+import logging
 
 import keke
 
@@ -20,6 +21,8 @@ from .pypi import (
 from .registry import get_finders
 
 _MAX_SCAN_BYTES = 300 * 1024 * 1024
+
+log = logging.getLogger(__name__)
 
 
 class ScanSkipped(RuntimeError):
@@ -121,9 +124,12 @@ def get_artifacts(
     save_dir: str | None = None,
 ) -> list[Artifact]:
     if pkg_info is not None:
-        artifacts = [make_artifact(f) for f in pkg_info.get("releases", {}).get(version, [])]
+        release_files = pkg_info.get("releases", {}).get(version, [])
+        if not release_files:
+            release_files = get_release_files(package, version)
     else:
-        artifacts = [make_artifact(f) for f in get_release_files(package, version)]
+        release_files = get_release_files(package, version)
+    artifacts = [make_artifact(f) for f in release_files]
     artifacts = prepare_scan_artifacts(artifacts)
     if save_dir:
         from pathlib import Path
@@ -174,7 +180,11 @@ def analyze_artifacts(
                 try:
                     findings.extend(spec.fn(view, get_settings(config, spec.name)))
                 except Exception:
-                    pass
+                    log.exception(
+                        "finder %s failed while scanning %s",
+                        spec.name,
+                        view.filename,
+                    )
     finally:
         for v in views:
             v.close()

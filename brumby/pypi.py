@@ -33,6 +33,13 @@ def _retrying_session() -> requests.Session:
     return session
 
 
+def validate_project_name(project: str) -> str:
+    """Reject requirement specifiers where a bare project name is required."""
+    if "==" in project:
+        raise ValueError(f"invalid project name: {project!r}")
+    return project
+
+
 def validate_version(version: str) -> str:
     """Return version unchanged if it is a valid PEP 440 version.
 
@@ -48,6 +55,7 @@ def validate_version(version: str) -> str:
 
 @keke.ktrace("package")
 def get_package_info(package: str) -> dict[str, Any]:
+    validate_project_name(package)
     url, proxies = network.prepare_request("metadata", f"{_PYPI_BASE}/{package}/json")
     resp = requests.get(url, timeout=30, proxies=proxies)
     resp.raise_for_status()
@@ -60,6 +68,7 @@ def get_release_files(
 ) -> list[dict[str, Any]]:
     if session is None:
         session = _retrying_session()
+    validate_project_name(package)
     url, proxies = network.prepare_request("metadata", f"{_PYPI_BASE}/{package}/{version}/json")
     resp = session.get(url, timeout=30, proxies=proxies)
     resp.raise_for_status()
