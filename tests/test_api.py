@@ -308,7 +308,9 @@ def test_export_returns_paths_and_handles_non_utf8_files(tmp_path) -> None:
 
     result = api.export(str(old), str(new), output=tmp_path / "export", config={})
 
-    assert result.prompt.read_text().endswith("  - Last line: the literal text DONE\n")
+    assert result.prompt.read_text().endswith(
+        "files that differ.\n"
+    )
     assert (result.old_dir / "data.bin").read_bytes() == b"old\xffdata"
     assert (result.new_dir / "data.bin").read_bytes() == b"new\xffdata"
     assert not (result.output / "diff.txt").exists()

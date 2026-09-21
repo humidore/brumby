@@ -155,11 +155,6 @@ behavior introduced in the new release: exfiltration, obfuscation, unexpected
 network/filesystem/process access, credential harvesting, or other supply-chain
 tampering. As a starting point, you can run `diff -qr old new` yourself to list
 files that differ.
-
-Output format (exactly):
-  - First line: a single integer from 0 to 100 rating how malicious this change
-    appears (0 = clearly benign, 100 = clearly malicious).
-  - Last line: the literal text DONE
 """
 
 def _configure(config: dict | None = None) -> dict:
