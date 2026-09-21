@@ -73,6 +73,23 @@ def test_resolve_versions_falls_back_to_preceding_release_when_none_meets_cutoff
     assert stable == "1.1"
 
 
+def test_resolve_versions_excludes_newer_version_uploaded_before_supplied_new() -> None:
+    info = {
+        "releases": {
+            "4.5.10": [{"upload_time_iso_8601": "2026-05-07T16:00:00+00:00"}],
+            "4.5.11": [{"upload_time_iso_8601": "2026-05-08T12:00:00+00:00"}],
+            "4.6.3": [{"upload_time_iso_8601": "2026-05-06T10:00:00+00:00"}],
+        }
+    }
+
+    stable, new = resolve_versions(
+        "jupyterlab", cutoff_hours=24, new_version="4.5.11", pkg_info=info
+    )
+
+    assert new == "4.5.11"
+    assert stable == "4.5.10"
+
+
 def test_resolve_versions_returns_no_stable_when_supplied_new_is_oldest() -> None:
     stable, new = resolve_versions("pkg", cutoff_hours=24, new_version="1.0", pkg_info=_pkg_info())
 

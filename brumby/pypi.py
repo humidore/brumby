@@ -178,9 +178,9 @@ def find_stable_before(
     """Return the stable baseline to compare an explicitly chosen new_version against.
 
     The cutoff is anchored on new_version's own upload time rather than the current
-    time, so the baseline always predates new_version. Prefers the newest release
-    uploaded at least cutoff_hours before it, falling back to the release immediately
-    preceding it. Returns None when nothing predates new_version.
+    time. Candidates must both predate new_version's upload and be older according
+    to PEP 440, which excludes releases from a newer maintenance branch that happened
+    to be uploaded first.
     """
     if info is None:
         info = get_package_info(package)
@@ -192,7 +192,16 @@ def find_stable_before(
     if anchor is None:
         raise ValueError(f"version {new_version} has no files for {package}")
 
-    older = [item for item in versioned if item[0] < anchor]
+    parsed_new_version = Version(new_version)
+    older = []
+    for item in versioned:
+        upload_time, version = item
+        try:
+            is_older_version = Version(version) < parsed_new_version
+        except InvalidVersion:
+            is_older_version = False
+        if upload_time < anchor and is_older_version:
+            older.append(item)
     if not older:
         return None
     if use_cutoff:
