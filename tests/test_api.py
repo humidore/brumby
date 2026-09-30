@@ -105,7 +105,6 @@ def test_check_compares_urls(monkeypatch) -> None:
 
 def test_check_lists_package_versions_without_scanning(monkeypatch) -> None:
     monkeypatch.setattr(api, "get_package_info", lambda package: _pkg_info())
-    monkeypatch.setattr(api, "resolve_versions", lambda *args, **kwargs: ("1.0", "2.0"))
     monkeypatch.setattr(api, "check_package", lambda *args, **kwargs: pytest.fail("scanned"))
 
     result = api.check("demo", list_only=True, config={})
@@ -116,6 +115,28 @@ def test_check_lists_package_versions_without_scanning(monkeypatch) -> None:
     assert result.old.upload_bounds[0].isoformat() == "2025-01-01T00:00:00+00:00"
     assert result.new.version == "2.0"
     assert not result.diffs
+
+
+def test_check_compares_latest_even_when_multiple_releases_are_old(monkeypatch) -> None:
+    compared = {}
+    monkeypatch.setattr(api, "get_package_info", lambda package: _pkg_info())
+    monkeypatch.setattr(
+        api, "check_package",
+        lambda package, **kwargs: compared.update(kwargs) or ([], [], []),
+    )
+
+    result = api.check("demo", config={})
+
+    assert (result.old.version, result.new.version) == ("1.0", "2.0")
+    assert (compared["stable_version"], compared["new_version"]) == ("1.0", "2.0")
+
+
+def test_check_reports_no_previous_version_for_single_release(monkeypatch) -> None:
+    info = {"releases": {"1.0": [{"upload_time_iso_8601": "2025-01-01T00:00:00+00:00"}]}}
+    monkeypatch.setattr(api, "get_package_info", lambda package: info)
+
+    with pytest.raises(ValueError, match="No previous version found for demo"):
+        api.check("demo", config={})
 
 
 def test_check_compares_package_versions_and_passes_options(monkeypatch) -> None:
@@ -395,7 +416,6 @@ def test_export_downloads_package_sdists(monkeypatch, tmp_path) -> None:
 
 def test_export_downloads_package_wheels(monkeypatch, tmp_path) -> None:
     monkeypatch.setattr(api, "get_package_info", lambda package: _pkg_info())
-    monkeypatch.setattr(api, "resolve_versions", lambda *args, **kwargs: ("1.0", "2.0"))
     monkeypatch.setattr(
         api,
         "get_artifacts",

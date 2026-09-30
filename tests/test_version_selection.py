@@ -52,6 +52,40 @@ def test_find_last_with_cutoff_returns_only_one_when_no_old_enough_base() -> Non
     assert new == "1.1"
 
 
+def test_resolve_versions_defaults_to_latest_upload_even_after_recent_window() -> None:
+    info = {
+        "releases": {
+            "5.4.0": [{"upload_time_iso_8601": "2025-06-03T10:00:00+00:00"}],
+            "6.0.0": [{"upload_time_iso_8601": "2026-09-25T10:00:00+00:00"}],
+        }
+    }
+
+    assert resolve_versions("pkg", pkg_info=info) == ("5.4.0", "6.0.0")
+
+
+def test_resolve_versions_uses_upload_order_for_a_late_maintenance_release() -> None:
+    info = {
+        "releases": {
+            "2.0": [{"upload_time_iso_8601": "2026-09-20T10:00:00+00:00"}],
+            "1.9.1": [{"upload_time_iso_8601": "2026-09-25T10:00:00+00:00"}],
+        }
+    }
+
+    assert resolve_versions("pkg", pkg_info=info) == ("2.0", "1.9.1")
+
+
+def test_resolve_versions_uses_preceding_release_if_none_meets_cutoff() -> None:
+    info = {
+        "releases": {
+            "1.0": [{"upload_time_iso_8601": "2026-05-08T11:00:00+00:00"}],
+            "1.1": [{"upload_time_iso_8601": "2026-05-08T12:00:00+00:00"}],
+        }
+    }
+
+    assert resolve_versions("pkg", pkg_info=info) == ("1.0", "1.1")
+    assert resolve_versions("pkg", last=True, pkg_info=info) == (None, "1.1")
+
+
 def test_resolve_versions_honors_last_mode() -> None:
     stable, new = resolve_versions("pkg", cutoff_hours=24, last=True, pkg_info=_pkg_info())
 
