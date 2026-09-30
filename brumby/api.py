@@ -33,6 +33,7 @@ from .pypi import (
     get_latest_version,
     get_package_info,
     release_upload_bounds,
+    uploaded_versions,
     validate_version,
 )
 from .registry import get_finders
@@ -137,9 +138,9 @@ class ExportResult:
     """Name the files and labels produced for an offline review."""
 
     output: Path
-    old: ReleaseRef
+    old: ReleaseRef | None
     new: ReleaseRef
-    old_dir: Path
+    old_dir: Path | None
     new_dir: Path
     prompt: Path
 
@@ -158,6 +159,21 @@ files that differ.
 
 In your output, you MUST include a score, which is a single integer from 0 to 100 rating
 how malicious this change appears (0 = clearly benign, 100 = clearly malicious).
+"""
+
+_EXPORT_SINGLE_PROMPT = """\
+This directory contains an extracted release artifact for {new}, and it is the only available
+release of this PyPI package.
+
+  new/       {new}
+
+Review the full contents of new/ for signs of malicious or suspicious behavior:
+exfiltration, obfuscation, unexpected network/filesystem/process access, credential
+harvesting, malicious installation behavior, or other supply-chain tampering.
+There is no earlier release to compare against, so assess this release on its own.
+
+In your output, you MUST include a score, which is a single integer from 0 to 100 rating
+how malicious this release appears (0 = clearly benign, 100 = clearly malicious).
 """
 
 def _configure(config: dict | None = None) -> dict:
@@ -501,11 +517,13 @@ def export(
     save_dir: str | None = None,
     config: dict | None = None,
 ) -> ExportResult:
-    """Extract two artifacts and write the prompt used for offline review."""
+    """Extract one release or a pair and write the prompt used for offline review."""
     _configure(config)
     old_path = Path(package)
     new_path = Path(other) if other else None
     target = Path(output) if output else Path(f"brumby-export-{old_path.stem}")
+    old_artifact = None
+    old_ref = None
     if old_path.is_file() and new_path is not None and new_path.is_file():
         old_artifact = make_local_artifact(old_path)
         new_artifact = make_local_artifact(new_path)
@@ -522,24 +540,42 @@ def export(
             last=last,
             pkg_info=pkg_info,
         )
-        if not stable:
+        if stable and new and stable != new:
+            old_artifact = _pick_export_artifact(
+                get_artifacts(package, stable, pkg_info=pkg_info, save_dir=save_dir)
+            )
+            new_artifact = _pick_export_artifact(
+                get_artifacts(package, new, pkg_info=pkg_info, save_dir=save_dir)
+            )
+            old_ref = ReleaseRef(f"{package} {stable}", stable, release_upload_bounds(pkg_info, stable))
+            new_ref = ReleaseRef(f"{package} {new}", new, release_upload_bounds(pkg_info, new))
+        elif len(versioned := uploaded_versions(pkg_info)) == 1:
+            # If only one version is found for the package, just pull that version's wheel.
+            # The version is stored in "new" if newer than 24 hours, or "stable" if older
+            selected = new or stable or versioned[0][1]
+            artifacts = get_artifacts(package, selected, pkg_info=pkg_info, save_dir=save_dir)
+            new_artifact = next(
+                (artifact for artifact in artifacts if artifact.filetype == "wheel"), None
+            ) or _pick_export_artifact(artifacts)
+            new_ref = ReleaseRef(
+                f"{package} {selected}", selected, release_upload_bounds(pkg_info, selected)
+            )
+        elif not stable:
             raise ValueError(f"No previous version found for {package}")
-        if not new or stable == new:
+        else:
             raise ValueError(f"Only one version found for {package}")
-        old_artifact = _pick_export_artifact(
-            get_artifacts(package, stable, pkg_info=pkg_info, save_dir=save_dir)
-        )
-        new_artifact = _pick_export_artifact(
-            get_artifacts(package, new, pkg_info=pkg_info, save_dir=save_dir)
-        )
-        old_ref = ReleaseRef(f"{package} {stable}", stable, release_upload_bounds(pkg_info, stable))
-        new_ref = ReleaseRef(f"{package} {new}", new, release_upload_bounds(pkg_info, new))
 
-    old_dir, new_dir = target / "old", target / "new"
-    _extract_artifact(old_artifact, old_dir)
+    old_dir = target / "old" if old_artifact is not None else None
+    new_dir = target / "new"
+    if old_dir is not None:
+        _extract_artifact(old_artifact, old_dir)
     _extract_artifact(new_artifact, new_dir)
     prompt = target / "PROMPT.md"
-    prompt.write_text(_EXPORT_PROMPT.format(old=old_ref.label, new=new_ref.label))
+    prompt.write_text(
+        _EXPORT_PROMPT.format(old=old_ref.label, new=new_ref.label)
+        if old_ref is not None
+        else _EXPORT_SINGLE_PROMPT.format(new=new_ref.label)
+    )
     return ExportResult(target, old_ref, new_ref, old_dir, new_dir, prompt)
 
 

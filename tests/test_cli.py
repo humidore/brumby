@@ -265,6 +265,23 @@ def test_export_prints_returned_paths_and_passes_config(monkeypatch, capsys, tmp
     assert recorded["config"] is config
 
 
+def test_export_prints_single_release_without_old_path(monkeypatch, capsys, tmp_path) -> None:
+    monkeypatch.setattr(api, "export", lambda *args, **kwargs: api.ExportResult(
+        tmp_path / "export",
+        None,
+        api.ReleaseRef("demo 1.0", "1.0"),
+        None,
+        tmp_path / "export/new",
+        tmp_path / "export/PROMPT.md",
+    ))
+
+    assert cli.cmd_export(_args()) == 0
+    out = capsys.readouterr().out
+    assert "new:    demo 1.0  -> new/" in out
+    assert "old:" not in out
+    assert "prompt: PROMPT.md" in out
+
+
 @pytest.mark.parametrize(
     ("error", "code", "stream", "text"),
     [
