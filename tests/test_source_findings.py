@@ -8,6 +8,7 @@ from brumby.analyze import analyze_artifacts
 from brumby.artifact import make_local_artifact
 from brumby.finders.source import (
     _has_import_time_spawn,
+    _shannon_entropy,
     find_giant_python_file,
     find_high_entropy_blob,
     find_high_entropy_source,
@@ -74,6 +75,22 @@ def test_high_entropy_source_uses_lines_not_sliding_windows() -> None:
     findings = find_high_entropy_source(view, {"threshold": 5.5, "max_line_length": 8192})
 
     assert findings == [Finding("high_entropy_source", "pkg/proxy.py", "pkg-1.0.whl", "wheel")]
+
+
+def test_high_entropy_source_does_not_overcount_utf8_framing_bits() -> None:
+    # This ordinary Chinese message scores above 5.5 when each UTF-8 leading
+    # and continuation byte is treated as a distinct symbol.
+    message = "用户可以通过设置页面修改个人资料、通知偏好和隐私选项，所有更改将在保存后立即生效并同步到其他设备。"
+    view = _DummyView([("pkg/messages.py", f'message = "{message}"\n'.encode())])
+
+    assert find_high_entropy_source(view, {"threshold": 5.5, "max_line_length": 8192}) == []
+
+
+def test_shannon_entropy_keeps_invalid_utf8_on_the_byte_scale() -> None:
+    plaintext = b"Users can update their profile, notification preferences, and privacy options from the settings page."
+    ciphertext = bytes(byte ^ ((index * 73 + 41) & 0xFF) for index, byte in enumerate(plaintext))
+
+    assert _shannon_entropy(ciphertext) > 5.5
 
 
 def test_high_entropy_source_skips_overly_long_lines() -> None:
