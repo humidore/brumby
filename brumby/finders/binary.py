@@ -40,22 +40,28 @@ def _wheel_tags(filename: str) -> str:
 
 
 _NATIVE_EXTS = {"so", "pyd", "dylib"}
+_MYPYC_HASH_PREFIX = re.compile(r"^[0-9a-fA-F]{20}(?=__mypyc(?:\.|$))")
 
 
 def _normalize_native_leaf(leaf: str) -> str:
     """Strip the CPython ABI/platform tag from a compiled extension's filename
     (e.g. "_native.cpython-311-darwin.so" -> "_native.so", "_native.cp311-
     cp311-win_amd64.pyd" -> "_native.pyd"), so a routine Python-version or
-    arch rebuild isn't seen as a brand new binary.
+    arch rebuild isn't seen as a brand new binary. Also remove mypyc's
+    compilation-unit digest (e.g. "6ec57f84c680d3a3778b__mypyc.so" ->
+    "__mypyc.so"), which changes when the compiled module set changes.
 
     Only strips when the final segment is itself a known extension -- Unix's
     "libfoo.so.3" convention puts a version number *after* the real
     extension, and collapsing that would eat the ".so" instead of a tag.
     """
     parts = leaf.split(".")
-    if len(parts) <= 2 or parts[-1].lower() not in _NATIVE_EXTS:
-        return leaf
-    return f"{parts[0]}.{parts[-1]}"
+    if len(parts) > 2 and parts[-1].lower() in _NATIVE_EXTS:
+        leaf = f"{parts[0]}.{parts[-1]}"
+
+    # mypyc names its shared compilation unit after a digest of the modules in
+    # that unit. The digest changes between otherwise comparable releases.
+    return _MYPYC_HASH_PREFIX.sub("", leaf)
 
 
 def _binary_value(view: ArtifactView, name: str) -> str:

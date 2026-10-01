@@ -54,6 +54,26 @@ def test_binary_types_normalizes_cpython_abi_tag() -> None:
     assert find_binary_types(view, {}) == [Finding("has_elf_binary", "pkg/_native.so", "pkg-1.0.whl", "wheel")]
 
 
+def test_binary_types_normalizes_mypyc_compilation_unit_hash() -> None:
+    view = _DummyView([("pkg/6ec57f84c680d3a3778b__mypyc.so", b"\x7fELF....")])
+
+    assert find_binary_types(view, {}) == [Finding("has_elf_binary", "pkg/__mypyc.so", "pkg-1.0.whl", "wheel")]
+
+
+def test_binary_types_normalizes_mypyc_hash_and_cpython_abi_tag() -> None:
+    view = _DummyView([("pkg/6ec57f84c680d3a3778b__mypyc.cpython-315-aarch64-linux-gnu.so", b"\x7fELF....")])
+
+    assert find_binary_types(view, {}) == [Finding("has_elf_binary", "pkg/__mypyc.so", "pkg-1.0.whl", "wheel")]
+
+
+def test_binary_types_preserves_hash_named_non_mypyc_binary() -> None:
+    view = _DummyView([("pkg/6ec57f84c680d3a3778b_plugin.so", b"\x7fELF....")])
+
+    assert find_binary_types(view, {}) == [
+        Finding("has_elf_binary", "pkg/6ec57f84c680d3a3778b_plugin.so", "pkg-1.0.whl", "wheel")
+    ]
+
+
 def test_binary_types_detects_aout_binary() -> None:
     view = _DummyView([("pkg/bin/legacy", b"\x07\x01....")])
 
