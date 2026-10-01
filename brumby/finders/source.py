@@ -40,6 +40,10 @@ _BASE64_COMPRESSED_PREFIX_PAT = re.compile(
     + _BASE64_CHAR
     + rb"{4,}"
 )
+_BASE64_KNOWN_BAD_STRINGS = (b"os.system", b"/dev/tcp", b"unshare")
+_BASE64_KNOWN_BAD_PAT = re.compile(
+    b"|".join(Segment(value).as_regex().encode("ascii") for value in _BASE64_KNOWN_BAD_STRINGS)
+)
 _ALIASED_SPAWN_IMPORT_PAT = re.compile(
     rb"(?m)^[ \t]*import\b[^\n]*\b(?:os|sys|subprocess)[ \t]+as[ \t]+\w+",
 )
@@ -228,6 +232,20 @@ def find_base64_encoded_compressed_data(view: ArtifactView, cfg: dict) -> list[F
             findings.append(
                 Finding("base64_encoded_compressed_data", view.relative_name(name), view.filename, view.resource)
             )
+    return findings
+
+
+@register(
+    "base64_encoded_known_bad",
+    "A .py file contains Base64 data encoding a known dangerous string",
+    kind="sketchy",
+    needs_content=True,
+)
+def find_base64_encoded_known_bad(view: ArtifactView, cfg: dict) -> list[Finding]:
+    findings: list[Finding] = []
+    for name, content in view.iter_files(exts=_PY):
+        if _BASE64_KNOWN_BAD_PAT.search(content):
+            findings.append(Finding("base64_encoded_known_bad", view.relative_name(name), view.filename, view.resource))
     return findings
 
 
