@@ -1,6 +1,8 @@
 # Development guide
 
-Brumby compares Python release artifacts and reports signals that become worse in a new release. Most changes add or refine a finder.
+Brumby compares Python release artifacts and reports signals that become worse in a new release. Most changes add or refine a finder, and no special effort is necessary for backwards-compatibility -- a given run explicitly compares two releases using the same version of the code.
+
+Users should configure exceptions, disabling, and overall thresholds in `brumby.toml` -- there is an example file here that should show whatever the defaults would be.
 
 ## Find a finder
 
