@@ -11,6 +11,7 @@ license = "MIT"
 authors = [{ name = "Tim Hatch", email = "tim@timhatch.com" }]
 requires-python = ">=3.11"
 dependencies = [
+    "b64-regex",
     "keke",
     "packaging",
     "requests",
