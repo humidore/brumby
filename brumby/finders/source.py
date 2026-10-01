@@ -8,6 +8,7 @@ from collections import Counter
 from contextlib import contextmanager
 
 import keke
+from b64_regex.recoder import Segment
 
 from ..artifact import ArtifactView
 from ..finding import Finding
@@ -17,6 +18,10 @@ _PY = frozenset({".py"})
 _PY_JS = frozenset({".py", ".js"})
 
 _BASE64_PAT = re.compile(rb"^\s*(?:import base64|from base64\b)", re.MULTILINE)
+_BASE64_KNOWN_BAD_STRINGS = (b"os.system", b"/dev/tcp", b"unshare")
+_BASE64_KNOWN_BAD_PAT = re.compile(
+    b"|".join(Segment(value).as_regex().encode("ascii") for value in _BASE64_KNOWN_BAD_STRINGS)
+)
 _ALIASED_SPAWN_IMPORT_PAT = re.compile(
     rb"(?m)^[ \t]*import\b[^\n]*\b(?:os|sys|subprocess)[ \t]+as[ \t]+\w+",
 )
@@ -176,6 +181,20 @@ def find_imports_base64(view: ArtifactView, cfg: dict) -> list[Finding]:
     for name, content in view.iter_files(exts=_PY):
         if _BASE64_PAT.search(content):
             findings.append(Finding("imports_base64", view.relative_name(name), view.filename, view.resource))
+    return findings
+
+
+@register(
+    "base64_encoded_known_bad",
+    "A .py file contains Base64 data encoding a known dangerous string",
+    kind="sketchy",
+    needs_content=True,
+)
+def find_base64_encoded_known_bad(view: ArtifactView, cfg: dict) -> list[Finding]:
+    findings: list[Finding] = []
+    for name, content in view.iter_files(exts=_PY):
+        if _BASE64_KNOWN_BAD_PAT.search(content):
+            findings.append(Finding("base64_encoded_known_bad", view.relative_name(name), view.filename, view.resource))
     return findings
 
 
