@@ -3,9 +3,19 @@ revision = 3
 requires-python = ">=3.11"
 
 [[package]]
+name = "b64-regex"
+version = "0.1.2"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/02/f2/6e3347549bf658d7905d7efcdcf7014e29b4ecd005401d3c24e0889e9700/b64_regex-0.1.2.tar.gz", hash = "sha256:265e8b361c9236a5fee98b926513b737c30fda8e156e2588caa1668969a90c31", size = 134864, upload-time = "2023-07-18T11:07:50.377Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/7b/92/25df2abe0afbf64ea3063db5d3d4c3047c8dfabcff3d30d4dc931ab854bf/b64_regex-0.1.2-py3-none-any.whl", hash = "sha256:9a63c21278c957727f4e1ec3af4c940e7739a50167397fe3c3d9b7407788bc0f", size = 133755, upload-time = "2023-07-18T11:07:46.898Z" },
+]
+
+[[package]]
 name = "brumby"
 source = { editable = "." }
 dependencies = [
+    { name = "b64-regex" },
     { name = "keke" },
     { name = "packaging" },
     { name = "requests" },
@@ -33,6 +43,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
+    { name = "b64-regex" },
     { name = "checkdeps", marker = "extra == 'dev'", specifier = "==0.9.0" },
     { name = "coverage", marker = "extra == 'test'", specifier = ">=6" },
     { name = "keke" },
