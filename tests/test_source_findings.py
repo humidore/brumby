@@ -1,4 +1,6 @@
+import base64
 import gc
+import gzip
 import tempfile
 import zipfile
 from pathlib import Path
@@ -8,6 +10,7 @@ from brumby.analyze import analyze_artifacts
 from brumby.artifact import make_local_artifact
 from brumby.finders.source import (
     _has_import_time_spawn,
+    find_base64_encoded_compressed_data,
     find_giant_python_file,
     find_high_entropy_blob,
     find_high_entropy_source,
@@ -112,6 +115,34 @@ def test_high_entropy_source_still_reports_string_with_repeated_characters() -> 
     assert find_high_entropy_source(view, {"threshold": 5.5, "max_line_length": 8192}) == [
         Finding("high_entropy_source", "pkg/validation.py", "pkg-1.0.whl", "wheel")
     ]
+
+
+def test_base64_encoded_compressed_data_finds_gzip_and_zstd_headers() -> None:
+    gzip_data = base64.b64encode(gzip.compress(b"embedded configuration"))
+    zstd_data = base64.b64encode(b"\x28\xb5\x2f\xfd" + b"compressed frame payload")
+    view = _DummyView(
+        [
+            ("pkg/gzip_data.py", b'blob = "' + gzip_data + b'"\n'),
+            ("pkg/zstd_data.py", b'blob = "' + zstd_data + b'"\n'),
+        ]
+    )
+
+    assert find_base64_encoded_compressed_data(view, {}) == [
+        Finding("base64_encoded_compressed_data", "pkg/gzip_data.py", "pkg-1.0.whl", "wheel"),
+        Finding("base64_encoded_compressed_data", "pkg/zstd_data.py", "pkg-1.0.whl", "wheel"),
+    ]
+
+
+def test_base64_encoded_compressed_data_requires_magic_at_token_start() -> None:
+    embedded_magic = base64.b64encode(b"prefix" + gzip.compress(b"data"))
+    view = _DummyView(
+        [
+            ("pkg/plain.py", b'blob = "ordinary text beginning H4sI"\n'),
+            ("pkg/embedded.py", b'blob = "' + embedded_magic + b'"\n'),
+        ]
+    )
+
+    assert find_base64_encoded_compressed_data(view, {}) == []
 
 
 def test_giant_python_file_reports_line_count_over_threshold() -> None:

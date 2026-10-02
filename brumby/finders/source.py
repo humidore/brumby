@@ -8,6 +8,7 @@ from collections import Counter
 from contextlib import contextmanager
 
 import keke
+from b64_regex.recoder import Segment
 
 from ..artifact import ArtifactView
 from ..finding import Finding
@@ -17,6 +18,28 @@ _PY = frozenset({".py"})
 _PY_JS = frozenset({".py", ".js"})
 
 _BASE64_PAT = re.compile(rb"^\s*(?:import base64|from base64\b)", re.MULTILINE)
+_BASE64_CHAR = rb"[A-Za-z0-9+/]"
+_BASE64_COMPRESSED_MAGICS = {
+    "gzip": b"\x1f\x8b\x08",
+    "zstd": b"\x28\xb5\x2f\xfd",
+}
+# Gzip's three-byte magic encodes exactly as ``H4sI``. A magic that does not
+# end on a four-character Base64 boundary leaves fixed bits in the next sextet,
+# so its final character must also match those bits while allowing the rest.
+# This is simpler than finding the magic anywhere in decoded data: a prefix has
+# one known alignment, while an interior match needs several alignments and may
+# have partial, unknown bits in both its first and last Base64 characters.
+_BASE64_COMPRESSED_PREFIX_PAT = re.compile(
+    rb"(?<!" + _BASE64_CHAR + rb")"
+    + rb"(?:"
+    + b"|".join(
+        Segment(magic).with_alignment(0).as_regex().encode("ascii")
+        for magic in _BASE64_COMPRESSED_MAGICS.values()
+    )
+    + rb")"
+    + _BASE64_CHAR
+    + rb"{4,}"
+)
 _ALIASED_SPAWN_IMPORT_PAT = re.compile(
     rb"(?m)^[ \t]*import\b[^\n]*\b(?:os|sys|subprocess)[ \t]+as[ \t]+\w+",
 )
@@ -176,6 +199,22 @@ def find_imports_base64(view: ArtifactView, cfg: dict) -> list[Finding]:
     for name, content in view.iter_files(exts=_PY):
         if _BASE64_PAT.search(content):
             findings.append(Finding("imports_base64", view.relative_name(name), view.filename, view.resource))
+    return findings
+
+
+@register(
+    "base64_encoded_compressed_data",
+    "A .py file contains Base64 data beginning with a gzip or Zstandard header",
+    kind="sketchy",
+    needs_content=True,
+)
+def find_base64_encoded_compressed_data(view: ArtifactView, cfg: dict) -> list[Finding]:
+    findings: list[Finding] = []
+    for name, content in view.iter_files(exts=_PY):
+        if _BASE64_COMPRESSED_PREFIX_PAT.search(content):
+            findings.append(
+                Finding("base64_encoded_compressed_data", view.relative_name(name), view.filename, view.resource)
+            )
     return findings
 
 
