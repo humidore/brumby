@@ -23,6 +23,12 @@ _BASE64_COMPRESSED_MAGICS = {
     "gzip": b"\x1f\x8b\x08",
     "zstd": b"\x28\xb5\x2f\xfd",
 }
+# Gzip's three-byte magic encodes exactly as ``H4sI``. A magic that does not
+# end on a four-character Base64 boundary leaves fixed bits in the next sextet,
+# so its final character must also match those bits while allowing the rest.
+# This is simpler than finding the magic anywhere in decoded data: a prefix has
+# one known alignment, while an interior match needs several alignments and may
+# have partial, unknown bits in both its first and last Base64 characters.
 _BASE64_COMPRESSED_PREFIX_PAT = re.compile(
     rb"(?<!" + _BASE64_CHAR + rb")"
     + rb"(?:"
