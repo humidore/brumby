@@ -49,7 +49,7 @@ def _add_version_flags(parser: argparse.ArgumentParser) -> None:
     """Add the shared --stable/--new version overrides."""
     parser.add_argument("--stable", default="", help="Older version (auto-detected if omitted)")
     parser.add_argument("--new", default="",
-                        help="Newer version (auto-detected if omitted); without --stable, the "
+                        help="Newer version (defaults to most recently uploaded release); without --stable, the "
                              "baseline is resolved from this version's upload time rather than "
                              "the current time")
 
@@ -304,13 +304,13 @@ def main() -> None:
     )
     sub = parser.add_subparsers(dest="command", metavar="COMMAND")
 
-    check = sub.add_parser("check", help="Compare two releases (stable vs new by default)")
+    check = sub.add_parser("check", help="Compare the latest uploaded release with an older release")
     check.add_argument("package", help="Package name, local artifact path, or artifact URL")
     check.add_argument("other", nargs="?", default="",
                        help="Optional second local artifact path or URL for a metadata-free artifact-only compare")
     _add_version_flags(check)
     check.add_argument("--cutoff", type=int, default=24, metavar="HOURS",
-                       help="Hours threshold for stable classification (default: 24)")
+                       help="Preferred age gap between the latest and older release (default: 24)")
     mode = check.add_mutually_exclusive_group()
     mode.add_argument("--last-two", action="store_true",
                       help="Compare the two most recent releases regardless of age")
@@ -351,7 +351,7 @@ def main() -> None:
                         help="Optional second local artifact path for artifact-only compare")
     _add_version_flags(export)
     export.add_argument("--cutoff", type=int, default=24, metavar="HOURS",
-                        help="Hours threshold for stable classification (default: 24)")
+                        help="Preferred age gap between the latest and older release (default: 24)")
     export_mode = export.add_mutually_exclusive_group()
     export_mode.add_argument("--last-two", action="store_true",
                              help="Compare the two most recent releases regardless of age")

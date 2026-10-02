@@ -211,7 +211,7 @@ def check(
     save_dir: str | None = None,
     config: dict | None = None,
 ) -> CheckResult:
-    """Compare package releases, local artifacts, or two artifact URLs."""
+    """Compare package releases, local artifacts, or two artifact URLs. If no versions specified, new version defaults to most recent release."""
     settings = _configure(config)
     old_path = Path(package)
     new_path = Path(other) if other else None

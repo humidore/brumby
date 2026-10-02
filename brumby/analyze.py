@@ -237,7 +237,10 @@ def resolve_versions(
     elif last_two:
         found_stable, found_new = find_last_two_versions(package, pkg_info)
     else:
-        found_stable, found_new = find_versions(package, cutoff_hours, info=pkg_info)
+        # "new" defaults to most recent release if not provided
+        found_stable, found_new = find_last_with_cutoff(
+            package, cutoff_hours, pkg_info, fallback_to_previous=True,
+        )
 
     return stable_version or found_stable, new_version or found_new
 
@@ -294,7 +297,9 @@ def select_assess_mode(
             return "check", stable, new
         return "inspect", None, new or stable
 
-    stable, new = resolve_versions(package, cutoff_hours=cutoff_hours, pkg_info=pkg_info)
+    # Assessment still requires a release uploaded within the recent window before
+    # choosing its normal comparison mode.
+    stable, new = find_versions(package, cutoff_hours, info=pkg_info)
     initial_latest = stable
     if stable and new and stable != new:
         return "check", stable, new
@@ -421,13 +426,18 @@ def find_last_two_versions(
 
 
 def find_last_with_cutoff(
-    package: str, cutoff_hours: int = 24, pkg_info: dict | None = None
+    package: str,
+    cutoff_hours: int = 24,
+    pkg_info: dict | None = None,
+    *,
+    fallback_to_previous: bool = False,
 ) -> tuple[str | None, str | None]:
     """Return newest version and the newest version at least cutoff_hours older.
 
     The older target is chosen by upload time, not by version ordering, so it can
     be numerically newer than the latest release if the project's version scheme
-    is not chronological.
+    is not chronological. When fallback_to_previous is set, use the immediately
+    preceding upload if none meets the cutoff.
     """
     if pkg_info is None:
         pkg_info = get_package_info(package)
@@ -440,6 +450,8 @@ def find_last_with_cutoff(
     cutoff = newest_time - datetime.timedelta(hours=cutoff_hours)
     older = [item for item in versioned[1:] if item[0] <= cutoff]
     if not older:
+        if fallback_to_previous and len(versioned) > 1:
+            return versioned[1][1], newest_version
         return None, newest_version
     return older[0][1], newest_version
 
