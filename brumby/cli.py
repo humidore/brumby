@@ -138,7 +138,8 @@ def cmd_export(args: argparse.Namespace) -> int:
         return 1
 
     print(f"Exported to {result.output}")
-    print(f"  old:    {result.old.label}  -> old/")
+    if result.old is not None:
+        print(f"  old:    {result.old.label}  -> old/")
     print(f"  new:    {result.new.label}  -> new/")
     print("  prompt: PROMPT.md")
     return 0
@@ -344,7 +345,7 @@ def main() -> None:
 
     export = sub.add_parser(
         "export",
-        help="Extract two matching artifacts to source trees and write a PROMPT.md for LLM review",
+        help="Extract a first release or a pair to source trees and write a PROMPT.md for LLM review",
     )
     export.add_argument("package", help="Package name or local artifact path")
     export.add_argument("other", nargs="?", default="",

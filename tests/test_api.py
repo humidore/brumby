@@ -1,3 +1,4 @@
+import datetime
 import io
 import tarfile
 import zipfile
@@ -428,6 +429,57 @@ def test_export_downloads_package_wheels(monkeypatch, tmp_path) -> None:
 
     assert (result.old_dir / "data.bin").read_bytes() == b"1.0"
     assert (result.new_dir / "data.bin").read_bytes() == b"2.0"
+
+
+@pytest.mark.parametrize("upload_time", ["2025-01-01T00:00:00+00:00", "recent"])
+def test_export_single_release_prefers_wheel(monkeypatch, tmp_path, upload_time) -> None:
+    if upload_time == "recent":
+        upload_time = datetime.datetime.now(tz=datetime.UTC).isoformat()
+    pkg_info = {
+        "info": {"version": "1.0"},
+        "releases": {"1.0": [{"upload_time_iso_8601": upload_time}]},
+    }
+    recorded = []
+    monkeypatch.setattr(api, "get_package_info", lambda package: pkg_info)
+
+    def get_artifacts(package, version, **kwargs):
+        recorded.append((version, kwargs["save_dir"]))
+        return [
+            _RemoteArtifact("sdist", _tar_bytes(b"sdist"), "demo.tar.gz"),
+            _RemoteArtifact("wheel", _zip_bytes(b"wheel"), "demo.whl"),
+        ]
+
+    monkeypatch.setattr(api, "get_artifacts", get_artifacts)
+
+    result = api.export("demo", output=tmp_path / "single", save_dir="saved", config={})
+
+    assert result.old is None
+    assert result.old_dir is None
+    assert not (result.output / "old").exists()
+    assert result.new.version == "1.0"
+    assert (result.new_dir / "data.bin").read_bytes() == b"wheel"
+    prompt = result.prompt.read_text()
+    assert "extracted release artifact for demo 1.0" in prompt
+    assert "assess this release on its own" in prompt
+    assert "how malicious this release appears" in prompt
+    assert "old/" not in prompt
+    assert "diff -qr" not in prompt
+    assert recorded == [("1.0", "saved")]
+
+
+def test_export_single_release_without_wheel_uses_sdist(monkeypatch, tmp_path) -> None:
+    monkeypatch.setattr(api, "get_package_info", lambda package: {
+        "info": {"version": "1.0"},
+        "releases": {"1.0": [{"upload_time_iso_8601": "2025-01-01T00:00:00+00:00"}]},
+    })
+    monkeypatch.setattr(api, "get_artifacts", lambda *args, **kwargs: [
+        _RemoteArtifact("sdist", _tar_bytes(b"sdist"), "demo.tar.gz")
+    ])
+
+    result = api.export("demo", output=tmp_path / "single-sdist")
+
+    assert (result.new_dir / "data.bin").read_bytes() == b"sdist"
+    assert "extracted release artifact for demo 1.0" in result.prompt.read_text()
 
 
 @pytest.mark.parametrize(

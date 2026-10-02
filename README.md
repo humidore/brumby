@@ -37,6 +37,15 @@ Only the names listed in `brumby.api.__all__` carry a compatibility guarantee.
 Every other module and package-root convenience import is an implementation detail
 and may change without notice.
 
+## Export for review
+
+`brumby export PACKAGE` extracts release artifacts and writes a `PROMPT.md` for
+an LLM to review. With two selected versions, `old/` and `new/` contain the extracted
+artifacts for comparison. If the package has only one release, the export contains
+that release in `new/` and the prompt asks for a standalone inspection. A wheel is
+used for that inspection when one is available. In a single-release API result,
+`old` and `old_dir` are `None`.
+
 ## Assessment results
 
 Brumby rates change, not safety. For the usual two-release assessment, `average`
