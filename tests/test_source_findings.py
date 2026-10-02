@@ -1,3 +1,4 @@
+import base64
 import gc
 import tempfile
 import zipfile
@@ -8,6 +9,7 @@ from brumby.analyze import analyze_artifacts
 from brumby.artifact import make_local_artifact
 from brumby.finders.source import (
     _has_import_time_spawn,
+    find_base64_encoded_known_bad,
     find_giant_python_file,
     find_high_entropy_blob,
     find_high_entropy_source,
@@ -112,6 +114,30 @@ def test_high_entropy_source_still_reports_string_with_repeated_characters() -> 
     assert find_high_entropy_source(view, {"threshold": 5.5, "max_line_length": 8192}) == [
         Finding("high_entropy_source", "pkg/validation.py", "pkg-1.0.whl", "wheel")
     ]
+
+
+def test_base64_encoded_known_bad_finds_every_alignment() -> None:
+    files = []
+    for index, value in enumerate((b"os.system", b"/dev/tcp", b"unshare")):
+        encoded = base64.b64encode(b"x" * index + value + b" suffix")
+        files.append((f"pkg/encoded{index}.py", b'blob = "' + encoded + b'"\n'))
+    view = _DummyView(files)
+
+    assert find_base64_encoded_known_bad(view, {}) == [
+        Finding("base64_encoded_known_bad", f"pkg/encoded{index}.py", "pkg-1.0.whl", "wheel")
+        for index in range(3)
+    ]
+
+
+def test_base64_encoded_known_bad_ignores_plaintext_and_unrelated_base64() -> None:
+    view = _DummyView(
+        [
+            ("pkg/plain.py", b"os.system('echo hello')\n"),
+            ("pkg/encoded.py", b'blob = "' + base64.b64encode(b"ordinary configuration data") + b'"\n'),
+        ]
+    )
+
+    assert find_base64_encoded_known_bad(view, {}) == []
 
 
 def test_giant_python_file_reports_line_count_over_threshold() -> None:
