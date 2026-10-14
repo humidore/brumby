@@ -94,9 +94,22 @@ def _has_import_time_spawn(content: bytes) -> bool:
 def _shannon_entropy(data: bytes) -> float:
     if not data:
         return 0.0
-    counts = Counter(data)
-    total = len(data)
-    return -sum((c / total) * math.log2(c / total) for c in counts.values())
+    try:
+        symbols: bytes | str = data.decode("utf-8")
+    except UnicodeDecodeError:
+        symbols = data
+
+    counts = Counter(symbols)
+    symbol_count = len(symbols)
+    entropy_per_symbol = -sum(
+        (count / symbol_count) * math.log2(count / symbol_count)
+        for count in counts.values()
+    )
+    # Keep the existing bits-per-source-byte scale so the threshold remains
+    # meaningful. A Unicode code point contributes once, regardless of how
+    # many UTF-8 bytes encode it. Invalid UTF-8 falls back to one symbol per
+    # byte, preserving detection of encrypted or arbitrary binary data.
+    return entropy_per_symbol * symbol_count / len(data)
 
 
 # A real quarantined-malware pair (ensmallen 0.8.100 -> 0.8.101) surfaced a
