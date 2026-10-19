@@ -12,6 +12,7 @@ from brumby.finders.source import (
     _has_import_time_spawn,
     _shannon_entropy,
     find_base64_encoded_compressed_data,
+    find_base64_encoded_known_bad,
     find_giant_python_file,
     find_high_entropy_blob,
     find_high_entropy_source,
@@ -160,6 +161,30 @@ def test_base64_encoded_compressed_data_requires_magic_at_token_start() -> None:
     )
 
     assert find_base64_encoded_compressed_data(view, {}) == []
+
+
+def test_base64_encoded_known_bad_finds_every_alignment() -> None:
+    files = []
+    for index, value in enumerate((b"os.system", b"/dev/tcp", b"unshare")):
+        encoded = base64.b64encode(b"x" * index + value + b" suffix")
+        files.append((f"pkg/encoded{index}.py", b'blob = "' + encoded + b'"\n'))
+    view = _DummyView(files)
+
+    assert find_base64_encoded_known_bad(view, {}) == [
+        Finding("base64_encoded_known_bad", f"pkg/encoded{index}.py", "pkg-1.0.whl", "wheel")
+        for index in range(3)
+    ]
+
+
+def test_base64_encoded_known_bad_ignores_plaintext_and_unrelated_base64() -> None:
+    view = _DummyView(
+        [
+            ("pkg/plain.py", b"os.system('echo hello')\n"),
+            ("pkg/encoded.py", b'blob = "' + base64.b64encode(b"ordinary configuration data") + b'"\n'),
+        ]
+    )
+
+    assert find_base64_encoded_known_bad(view, {}) == []
 
 
 def test_giant_python_file_reports_line_count_over_threshold() -> None:
