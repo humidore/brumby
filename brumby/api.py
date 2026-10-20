@@ -33,7 +33,6 @@ from .pypi import (
     get_latest_version,
     get_package_info,
     release_upload_bounds,
-    uploaded_versions,
     validate_version,
 )
 from .registry import get_finders
@@ -549,10 +548,13 @@ def export(
             )
             old_ref = ReleaseRef(f"{package} {stable}", stable, release_upload_bounds(pkg_info, stable))
             new_ref = ReleaseRef(f"{package} {new}", new, release_upload_bounds(pkg_info, new))
-        elif not stable or stable == new:
-            # If only one version is found for the package, just pull that version's wheel.
-            # The version is stored in "new" if newer than 24 hours, or "stable" if older
-            selected = new or stable or versioned[0][1]
+        else:
+            # in this case, either one of them is none or they're equal or they're both none so we can just take whatever as our single version
+            selected = new or stable
+            if selected is None:
+                raise ValueError(f"No versions found for {package}")
+
+            # Without a distinct baseline, prefer a wheel for the selected release.
             artifacts = get_artifacts(package, selected, pkg_info=pkg_info, save_dir=save_dir)
             new_artifact = next(
                 (artifact for artifact in artifacts if artifact.filetype == "wheel"), None
@@ -560,8 +562,6 @@ def export(
             new_ref = ReleaseRef(
                 f"{package} {selected}", selected, release_upload_bounds(pkg_info, selected)
             )
-        else:
-            raise ValueError(f"Only one version found for {package}")
 
     old_dir = target / "old" if old_artifact is not None else None
     new_dir = target / "new"
