@@ -487,9 +487,11 @@ def test_export_single_release_without_wheel_uses_sdist(monkeypatch, tmp_path) -
     [
         ({"new_version": "1.0"}, "1.0"),
         ({"last": True, "cutoff_hours": 72}, "2.0"),
+        ({"stable_version": "2.0", "new_version": "2.0"}, "2.0"),
+        ({"stable_version": "2.0"}, "2.0"),
     ],
 )
-def test_export_without_baseline_inspects_selected_release(
+def test_export_without_distinct_baseline_inspects_selected_release(
     monkeypatch, tmp_path, options, version
 ) -> None:
     recorded = []
@@ -520,7 +522,6 @@ def test_export_without_baseline_inspects_selected_release(
     ("versions", "message"),
     [
         (("1.0", None), "Only one version found"),
-        (("2.0", "2.0"), "Only one version found"),
     ],
 )
 def test_export_rejects_unusable_package_pairs(monkeypatch, versions, message) -> None:
