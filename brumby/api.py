@@ -549,7 +549,7 @@ def export(
             )
             old_ref = ReleaseRef(f"{package} {stable}", stable, release_upload_bounds(pkg_info, stable))
             new_ref = ReleaseRef(f"{package} {new}", new, release_upload_bounds(pkg_info, new))
-        elif len(versioned := uploaded_versions(pkg_info)) == 1:
+        elif len(versioned := uploaded_versions(pkg_info)) == 1 or not stable:
             # If only one version is found for the package, just pull that version's wheel.
             # The version is stored in "new" if newer than 24 hours, or "stable" if older
             selected = new or stable or versioned[0][1]
@@ -560,8 +560,6 @@ def export(
             new_ref = ReleaseRef(
                 f"{package} {selected}", selected, release_upload_bounds(pkg_info, selected)
             )
-        elif not stable:
-            raise ValueError(f"No previous version found for {package}")
         else:
             raise ValueError(f"Only one version found for {package}")
 

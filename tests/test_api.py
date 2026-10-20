@@ -483,9 +483,42 @@ def test_export_single_release_without_wheel_uses_sdist(monkeypatch, tmp_path) -
 
 
 @pytest.mark.parametrize(
+    ("options", "version"),
+    [
+        ({"new_version": "1.0"}, "1.0"),
+        ({"last": True, "cutoff_hours": 72}, "2.0"),
+    ],
+)
+def test_export_without_baseline_inspects_selected_release(
+    monkeypatch, tmp_path, options, version
+) -> None:
+    recorded = []
+    monkeypatch.setattr(api, "get_package_info", lambda package: _pkg_info())
+
+    def get_artifacts(package, selected, **kwargs):
+        recorded.append(selected)
+        return [
+            _RemoteArtifact("sdist", _tar_bytes(b"sdist"), "demo.tar.gz"),
+            _RemoteArtifact("wheel", _zip_bytes(b"wheel"), "demo.whl"),
+        ]
+
+    monkeypatch.setattr(api, "get_artifacts", get_artifacts)
+
+    result = api.export("demo", output=tmp_path / "standalone", config={}, **options)
+
+    assert result.old is None
+    assert result.old_dir is None
+    assert not (result.output / "old").exists()
+    assert result.new.version == version
+    assert (result.new_dir / "data.bin").read_bytes() == b"wheel"
+    assert f"extracted release artifact for demo {version}" in result.prompt.read_text()
+    assert "assess this release on its own" in result.prompt.read_text()
+    assert recorded == [version]
+
+
+@pytest.mark.parametrize(
     ("versions", "message"),
     [
-        ((None, "2.0"), "No previous version found"),
         (("1.0", None), "Only one version found"),
         (("2.0", "2.0"), "Only one version found"),
     ],
