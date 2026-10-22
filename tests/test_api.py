@@ -432,7 +432,10 @@ def test_export_downloads_package_wheels(monkeypatch, tmp_path) -> None:
 
 
 @pytest.mark.parametrize("upload_time", ["2025-01-01T00:00:00+00:00", "recent"])
-def test_export_single_release_prefers_wheel(monkeypatch, tmp_path, upload_time) -> None:
+@pytest.mark.parametrize("options", [{}, {"last": True}, {"last_two": True}])
+def test_export_single_release_prefers_wheel(
+    monkeypatch, tmp_path, upload_time, options
+) -> None:
     if upload_time == "recent":
         upload_time = datetime.datetime.now(tz=datetime.UTC).isoformat()
     pkg_info = {
@@ -451,7 +454,9 @@ def test_export_single_release_prefers_wheel(monkeypatch, tmp_path, upload_time)
 
     monkeypatch.setattr(api, "get_artifacts", get_artifacts)
 
-    result = api.export("demo", output=tmp_path / "single", save_dir="saved", config={})
+    result = api.export(
+        "demo", output=tmp_path / "single", save_dir="saved", config={}, **options
+    )
 
     assert result.old is None
     assert result.old_dir is None
@@ -483,19 +488,52 @@ def test_export_single_release_without_wheel_uses_sdist(monkeypatch, tmp_path) -
 
 
 @pytest.mark.parametrize(
-    ("versions", "message"),
+    ("options", "version"),
     [
-        ((None, "2.0"), "No previous version found"),
-        (("1.0", None), "Only one version found"),
-        (("2.0", "2.0"), "Only one version found"),
+        ({"new_version": "1.0"}, "1.0"),
+        ({"last": True, "cutoff_hours": 72}, "2.0"),
+        ({"stable_version": "2.0", "new_version": "2.0"}, "2.0"),
+        ({"stable_version": "2.0"}, "2.0"),
     ],
 )
-def test_export_rejects_unusable_package_pairs(monkeypatch, versions, message) -> None:
+def test_export_without_distinct_baseline_inspects_selected_release(
+    monkeypatch, tmp_path, options, version
+) -> None:
+    recorded = []
     monkeypatch.setattr(api, "get_package_info", lambda package: _pkg_info())
-    monkeypatch.setattr(api, "resolve_versions", lambda *args, **kwargs: versions)
 
-    with pytest.raises(ValueError, match=message):
-        api.export("demo", config={})
+    def get_artifacts(package, selected, **kwargs):
+        recorded.append(selected)
+        return [
+            _RemoteArtifact("sdist", _tar_bytes(b"sdist"), "demo.tar.gz"),
+            _RemoteArtifact("wheel", _zip_bytes(b"wheel"), "demo.whl"),
+        ]
+
+    monkeypatch.setattr(api, "get_artifacts", get_artifacts)
+
+    result = api.export("demo", output=tmp_path / "standalone", config={}, **options)
+
+    assert result.old is None
+    assert result.old_dir is None
+    assert not (result.output / "old").exists()
+    assert result.new.version == version
+    assert (result.new_dir / "data.bin").read_bytes() == b"wheel"
+    assert f"extracted release artifact for demo {version}" in result.prompt.read_text()
+    assert "assess this release on its own" in result.prompt.read_text()
+    assert recorded == [version]
+
+
+@pytest.mark.parametrize("releases", [{}, {"1.0": []}, {"1.0": [{}]}])
+def test_export_rejects_package_without_usable_releases(
+    monkeypatch, tmp_path, releases
+) -> None:
+    monkeypatch.setattr(api, "get_package_info", lambda package: {"releases": releases})
+    output = tmp_path / "empty"
+
+    with pytest.raises(ValueError, match="No versions found for demo"):
+        api.export("demo", output=output, config={})
+
+    assert not output.exists()
 
 
 def test_export_rejects_unsafe_zip_member(tmp_path) -> None:
