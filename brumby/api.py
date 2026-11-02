@@ -6,6 +6,7 @@ reconstructing command-line arguments.
 """
 
 import datetime
+import os
 import tarfile
 from dataclasses import dataclass
 from pathlib import Path
@@ -485,6 +486,10 @@ def _extract_artifact(artifact: Any, dest: Path) -> None:
                     if member.islnk() and member.linkname.startswith(prefix):
                         member.linkname = member.linkname[len(prefix):]
                 members = [member for member in members if member.name]
+            for member in members:
+                if member.issym():
+                    # Windows symlinks need native separators even for tar paths.
+                    member.linkname = member.linkname.replace("/", os.sep)
             archive.extractall(dest, members=members, filter="data")
             return
         names = archive.namelist()
