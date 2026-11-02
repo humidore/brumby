@@ -481,6 +481,9 @@ def _extract_artifact(artifact: Any, dest: Path) -> None:
                 prefix = top + "/"
                 for member in members:
                     member.name = member.name[len(prefix):] if member.name.startswith(prefix) else ""
+                    # Hard-link targets are archive-relative, unlike symlinks.
+                    if member.islnk() and member.linkname.startswith(prefix):
+                        member.linkname = member.linkname[len(prefix):]
                 members = [member for member in members if member.name]
             archive.extractall(dest, members=members, filter="data")
             return
