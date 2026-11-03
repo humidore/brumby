@@ -386,8 +386,9 @@ def test_export_extracts_tar_hardlinks(tmp_path, strip_root) -> None:
     ("target_name", "linkname"),
     [("demo/data.bin", "data.bin"), ("demo/demo/data.bin", "demo/data.bin")],
 )
+@pytest.mark.parametrize("strip_root", [True, False])
 def test_export_preserves_relative_tar_symlink_targets(
-    tmp_path, target_name, linkname
+    tmp_path, target_name, linkname, strip_root
 ) -> None:
     artifact = tmp_path / "demo.tar.gz"
     data = b"symlink target"
@@ -399,24 +400,27 @@ def test_export_preserves_relative_tar_symlink_targets(
         link.type = tarfile.SYMTYPE
         link.linkname = linkname
         archive.addfile(link)
+        if not strip_root:
+            archive.addfile(tarfile.TarInfo("metadata.txt"))
 
     result = api.export(str(artifact), str(artifact), output=tmp_path / "symlinks")
 
     for directory in (result.old_dir, result.new_dir):
-        link_path = directory / "alias.bin"
+        link_path = directory / ("alias.bin" if strip_root else "demo/alias.bin")
         assert link_path.is_symlink()
         assert link_path.readlink() == Path(linkname)
         assert link_path.read_bytes() == data
 
 
 @pytest.mark.parametrize("linkname", ["../outside.bin", "demo/../../outside.bin"])
-def test_export_rejects_tar_hardlinks_outside_destination(tmp_path, linkname) -> None:
+@pytest.mark.parametrize("link_type", [tarfile.LNKTYPE, tarfile.SYMTYPE])
+def test_export_rejects_tar_links_outside_destination(tmp_path, linkname, link_type) -> None:
     outside = tmp_path / "outside.bin"
     outside.write_bytes(b"outside")
     artifact = tmp_path / "demo.tar.gz"
     with tarfile.open(artifact, "w:gz") as archive:
         link = tarfile.TarInfo("demo/alias.bin")
-        link.type = tarfile.LNKTYPE
+        link.type = link_type
         link.linkname = linkname
         archive.addfile(link)
 
